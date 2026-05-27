@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/code_analyzer
+    username: postgres
+    driver-class-name: org.postgresql.Driver
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+app:
+  project:
+    upload-path: D:\projects

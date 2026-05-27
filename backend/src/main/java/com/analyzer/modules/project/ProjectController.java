@@ -1,0 +1,43 @@
+package com.analyzer.modules.project;
+
+import com.analyzer.common.result.Result;
+import com.analyzer.infrastructure.entity.CodeChunk;
+import com.analyzer.infrastructure.entity.Project;
+import com.analyzer.modules.project.model.dto.ProjectCreateDTO;
+import com.analyzer.modules.project.service.ProjectService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/project")
+public class ProjectController {
+
+    private final ProjectService projectService;
+
+    @Autowired
+    public ProjectController(ProjectService projectService) {
+        this.projectService = projectService;
+    }
+
+
+    @PostMapping("/create")
+    public Result<Project> createFromGit(@RequestBody ProjectCreateDTO createDTO) {
+        return null;
+    }
+
+    @PostMapping("/upload")
+    public Result<Project> createFromZip(@RequestParam("file") MultipartFile file,
+                                                     @RequestParam("projectName") String projectName) {
+        return Result.success(projectService.saveFromZip(file, projectName));
+    };
+
+    // 3. 查看项目解析结果
+    @GetMapping("/{projectId}/chunks")
+    public Result<List<CodeChunk>> getChunks(@PathVariable String projectId) {
+        return null;
+    }
+}
