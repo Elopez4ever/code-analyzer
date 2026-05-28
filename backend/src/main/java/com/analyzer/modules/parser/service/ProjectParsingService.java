@@ -1,8 +1,8 @@
 package com.analyzer.modules.parser.service;
 
-import com.analyzer.infrastructure.persistence.entity.ProjectStatus;
+import com.analyzer.infrastructure.persistence.po.enums.ProjectStatus;
 import com.analyzer.modules.parser.pipeline.ProjectParsingPipeline;
-import com.analyzer.modules.project.service.ProjectPersistenceService;
+import com.analyzer.infrastructure.persistence.service.ProjectPersistenceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;

@@ -1,9 +1,9 @@
 package com.analyzer.modules.project;
 
 import com.analyzer.common.result.Result;
-import com.analyzer.infrastructure.persistence.entity.CodeChunk;
-import com.analyzer.infrastructure.persistence.entity.Project;
+import com.analyzer.infrastructure.persistence.po.ProjectPO;
 import com.analyzer.modules.project.model.dto.ProjectCreateDTO;
+import com.analyzer.modules.project.model.vo.CodeChunkVO;
 import com.analyzer.modules.project.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -24,19 +24,19 @@ public class ProjectController {
 
 
     @PostMapping("/create")
-    public Result<Project> createFromGit(@RequestBody ProjectCreateDTO createDTO) {
+    public Result<ProjectPO> createFromGit(@RequestBody ProjectCreateDTO createDTO) {
         return null;
     }
 
     @PostMapping("/upload")
-    public Result<Project> createFromZip(@RequestParam("file") MultipartFile file,
-                                                     @RequestParam("projectName") String projectName) {
+    public Result<ProjectPO> createFromZip(@RequestParam("file") MultipartFile file,
+                                           @RequestParam("projectName") String projectName) {
         return Result.success(projectService.saveFromZip(file, projectName));
-    };
+    }
 
     // 3. 查看项目解析结果
     @GetMapping("/{projectId}/chunks")
-    public Result<List<CodeChunk>> getChunks(@PathVariable String projectId) {
+    public Result<List<CodeChunkVO>> getChunks(@PathVariable String projectId) {
         return null;
     }
 }

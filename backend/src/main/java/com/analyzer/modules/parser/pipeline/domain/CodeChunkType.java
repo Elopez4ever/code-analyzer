@@ -1,6 +1,5 @@
-package com.analyzer.modules.parser.model;
+package com.analyzer.modules.parser.pipeline.domain;
 
-// model/CodeChunkType.java
 public enum CodeChunkType {
     CLASS, METHOD, INTERFACE, ENUM,
     CONTROLLER, SERVICE, REPOSITORY, ENTITY, CONFIGURATION, COMPONENT,

@@ -50,6 +50,20 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- MyBatis-Plus -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+            <version>3.5.7</version>
+        </dependency>
+
+        <!-- pgvector Java 支持 -->
+        <dependency>
+            <groupId>com.pgvector</groupId>
+            <artifactId>pgvector</artifactId>
+            <version>0.1.6</version>
+        </dependency>
+
         <!-- Java 代码解析 — AST 切分方法/类 -->
         <dependency>
             <groupId>com.github.javaparser</groupId>
@@ -90,6 +104,7 @@
             <artifactId>tika-core</artifactId>
             <version>1.28.5</version>
         </dependency>
+
 
         <!-- 测试 -->
         <dependency>

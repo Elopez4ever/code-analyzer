@@ -1,4 +1,4 @@
-package com.analyzer.infrastructure.vectorstore.model;
+package com.analyzer.infrastructure.vectorstore.entity;
 
 import lombok.Builder;
 import lombok.Data;
@@ -7,8 +7,8 @@ import java.util.Map;
 
 @Data
 @Builder
-public class VectorDocument {
+public class VectorSearchResult {
     private String id;
-    private float[] vector;
+    private float score;
     private Map<String, Object> metadata;
 }

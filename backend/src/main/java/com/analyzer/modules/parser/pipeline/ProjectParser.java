@@ -1,6 +1,6 @@
 package com.analyzer.modules.parser.pipeline;
 
-import com.analyzer.modules.parser.model.SourceFile;
+import com.analyzer.modules.parser.pipeline.domain.SourceFile;
 
 import java.util.List;
 

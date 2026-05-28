@@ -1,4 +1,4 @@
-package com.analyzer.modules.parser.model;
+package com.analyzer.modules.parser.pipeline.domain;
 
 import lombok.Builder;
 import lombok.Data;

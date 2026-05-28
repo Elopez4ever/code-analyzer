@@ -2,9 +2,10 @@ package com.analyzer.modules.project.service;
 
 import com.analyzer.common.config.AppConfigProperties;
 import com.analyzer.common.exception.BusinessException;
-import com.analyzer.infrastructure.persistence.entity.Project;
-import com.analyzer.infrastructure.persistence.entity.ProjectStatus;
-import com.analyzer.infrastructure.embedding.file.FileValidationService;
+import com.analyzer.infrastructure.persistence.service.ProjectPersistenceService;
+import com.analyzer.infrastructure.persistence.po.ProjectPO;
+import com.analyzer.infrastructure.persistence.po.enums.ProjectStatus;
+import com.analyzer.infrastructure.file.FileValidationService;
 import com.analyzer.modules.parser.service.ProjectParsingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,7 @@ public class ProjectService {
 
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
 
-    public Project saveFromZip(MultipartFile file, String projectName) {
+    public ProjectPO saveFromZip(MultipartFile file, String projectName) {
         // 校验文件大小
         fileValidationService.validateFile(file, MAX_FILE_SIZE);
 
@@ -46,7 +47,7 @@ public class ProjectService {
         validateContentType(contentType);
 
         // 检查项目是否存在
-        Optional<Project> existingProject = projectPersistenceService.findExistingResume(projectName);
+        Optional<ProjectPO> existingProject = projectPersistenceService.findExistingResume(projectName);
         if (existingProject.isPresent()) {
             return existingProject.get();
         }
@@ -57,24 +58,24 @@ public class ProjectService {
         unzip(file, localPath);
 
         // 入库
-        Project project = new Project();
-        project.setProjectId(projectId);
-        project.setName(projectName != null ? projectName : generateDefaultProjectName());
-        project.setLocalPath(localPath);
-        project.setStatus(ProjectStatus.PARSING);
-        projectPersistenceService.save(project);
+        ProjectPO projectPO = new ProjectPO();
+        projectPO.setProjectId(projectId);
+        projectPO.setName(projectName != null ? projectName : generateDefaultProjectName());
+        projectPO.setLocalPath(localPath);
+        projectPO.setStatus(ProjectStatus.PARSING);
+        projectPersistenceService.save(projectPO);
 
         // 异步解析项目
         parsingService.parseAsync(projectId, localPath);
 
-        return project;
+        return projectPO;
     }
 
-    public Project saveFromGit(String gitUrl, String projectName) {
+    public ProjectPO saveFromGit(String gitUrl, String projectName) {
         // 校验 URL 格式
         gitService.validateGitUrl(gitUrl);
         // 检查项目是否存在
-        Optional<Project> existingProject = projectPersistenceService.findExistingResume(projectName);
+        Optional<ProjectPO> existingProject = projectPersistenceService.findExistingResume(projectName);
         if (existingProject.isPresent()) {
             return existingProject.get();
         }
@@ -85,16 +86,16 @@ public class ProjectService {
         gitService.cloneRepository(gitUrl, localPath);
 
         // 入库
-        Project project = new Project();
-        project.setProjectId(projectId);
-        project.setName(projectName != null ? projectName : extractRepoName(gitUrl));
-        project.setGitUrl(gitUrl);
-        project.setLocalPath(localPath);
-        project.setStatus(ProjectStatus.PARSING);
-        projectPersistenceService.save(project);
+        ProjectPO projectPO = new ProjectPO();
+        projectPO.setProjectId(projectId);
+        projectPO.setName(projectName != null ? projectName : extractRepoName(gitUrl));
+        projectPO.setGitUrl(gitUrl);
+        projectPO.setLocalPath(localPath);
+        projectPO.setStatus(ProjectStatus.PARSING);
+        projectPersistenceService.save(projectPO);
         // 异步解析
-        parsingService.parseAsync();
-        return project;
+        parsingService.parseAsync(projectId, localPath);
+        return projectPO;
     }
 
     /**

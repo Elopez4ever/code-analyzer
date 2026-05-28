@@ -1,8 +1,8 @@
 package com.analyzer.infrastructure.vectorstore.impl;
 
 import com.analyzer.infrastructure.vectorstore.VectorStore;
-import com.analyzer.infrastructure.vectorstore.model.VectorDocument;
-import com.analyzer.infrastructure.vectorstore.model.VectorSearchResult;
+import com.analyzer.infrastructure.vectorstore.entity.VectorDocument;
+import com.analyzer.infrastructure.vectorstore.entity.VectorSearchResult;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

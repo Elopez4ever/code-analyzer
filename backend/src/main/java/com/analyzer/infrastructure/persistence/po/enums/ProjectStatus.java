@@ -1,4 +1,4 @@
-package com.analyzer.infrastructure.persistence.entity;
+package com.analyzer.infrastructure.persistence.po.enums;
 
 public enum ProjectStatus {
     PARSING,     // 异步解析代码结构中

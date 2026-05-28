@@ -1,4 +1,4 @@
-package com.analyzer.infrastructure.embedding.file;
+package com.analyzer.infrastructure.file;
 
 import com.analyzer.common.exception.BusinessException;
 import com.analyzer.common.exception.ErrorCode;

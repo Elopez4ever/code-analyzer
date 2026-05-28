@@ -1,7 +1,7 @@
 package com.analyzer.infrastructure.vectorstore;
 
-import com.analyzer.infrastructure.vectorstore.model.VectorDocument;
-import com.analyzer.infrastructure.vectorstore.model.VectorSearchResult;
+import com.analyzer.infrastructure.vectorstore.entity.VectorDocument;
+import com.analyzer.infrastructure.vectorstore.entity.VectorSearchResult;
 
 import java.util.List;
 import java.util.Map;
