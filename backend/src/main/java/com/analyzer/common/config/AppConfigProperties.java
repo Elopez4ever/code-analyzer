@@ -7,11 +7,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-
-@Component
-@ConfigurationProperties(prefix = "app.project")
 @Getter
 @Setter
+@ConfigurationProperties(prefix = "app.project")
 public class AppConfigProperties {
     private String uploadPath;
     private List<String> allowedTypes;

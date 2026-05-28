@@ -2,11 +2,14 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/code_analyzer
     username: postgres
+    password: your_password
     driver-class-name: org.postgresql.Driver
-mybatis:
+
+mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
   configuration:
     map-underscore-to-camel-case: true
+
 app:
   project:
     upload-path: D:\projects
