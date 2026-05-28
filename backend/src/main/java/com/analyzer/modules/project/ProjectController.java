@@ -1,8 +1,8 @@
 package com.analyzer.modules.project;
 
 import com.analyzer.common.result.Result;
-import com.analyzer.infrastructure.entity.CodeChunk;
-import com.analyzer.infrastructure.entity.Project;
+import com.analyzer.infrastructure.persistence.entity.CodeChunk;
+import com.analyzer.infrastructure.persistence.entity.Project;
 import com.analyzer.modules.project.model.dto.ProjectCreateDTO;
 import com.analyzer.modules.project.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/project")

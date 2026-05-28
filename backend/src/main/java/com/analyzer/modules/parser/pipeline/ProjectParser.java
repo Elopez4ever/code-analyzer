@@ -1,4 +1,4 @@
-package com.analyzer.modules.parser.pipeline.stage;
+package com.analyzer.modules.parser.pipeline;
 
 import com.analyzer.modules.parser.model.SourceFile;
 

@@ -1,6 +1,6 @@
-package com.analyzer.modules.parser.pipeline.stage;
+package com.analyzer.modules.parser.pipeline;
 
-import com.analyzer.infrastructure.entity.CodeChunk;
+import com.analyzer.infrastructure.persistence.entity.CodeChunk;
 
 import java.util.List;
 

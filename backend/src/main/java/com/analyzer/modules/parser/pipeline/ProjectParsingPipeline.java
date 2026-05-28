@@ -1,6 +1,7 @@
 package com.analyzer.modules.parser.pipeline;
 
-import com.analyzer.modules.parser.pipeline.stage.*;
+import com.analyzer.infrastructure.embedding.EmbeddingService;
+import com.analyzer.infrastructure.vectorstore.VectorStore;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,6 @@ public class ProjectParsingPipeline {
     }
 
     public void execute(String projectId, String projectPath) {
-
+        
     }
 }

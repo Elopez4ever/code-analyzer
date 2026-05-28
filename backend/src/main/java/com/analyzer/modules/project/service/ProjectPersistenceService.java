@@ -1,6 +1,6 @@
 package com.analyzer.modules.project.service;
 
-import com.analyzer.infrastructure.entity.Project;
+import com.analyzer.infrastructure.persistence.entity.Project;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

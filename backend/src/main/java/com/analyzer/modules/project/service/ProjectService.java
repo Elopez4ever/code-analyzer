@@ -2,9 +2,9 @@ package com.analyzer.modules.project.service;
 
 import com.analyzer.common.config.AppConfigProperties;
 import com.analyzer.common.exception.BusinessException;
-import com.analyzer.infrastructure.entity.Project;
-import com.analyzer.infrastructure.entity.ProjectStatus;
-import com.analyzer.infrastructure.file.FileValidationService;
+import com.analyzer.infrastructure.persistence.entity.Project;
+import com.analyzer.infrastructure.persistence.entity.ProjectStatus;
+import com.analyzer.infrastructure.embedding.file.FileValidationService;
 import com.analyzer.modules.parser.service.ProjectParsingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

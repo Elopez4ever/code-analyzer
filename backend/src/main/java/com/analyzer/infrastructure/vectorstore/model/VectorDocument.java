@@ -1,4 +1,4 @@
-package com.analyzer.modules.parser.model;
+package com.analyzer.infrastructure.vectorstore.model;
 
 import lombok.Builder;
 import lombok.Data;

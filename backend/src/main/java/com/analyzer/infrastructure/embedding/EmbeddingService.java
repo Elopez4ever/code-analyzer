@@ -1,4 +1,4 @@
-package com.analyzer.modules.parser.pipeline.stage;
+package com.analyzer.infrastructure.embedding;
 
 import java.util.List;
 

@@ -1,7 +1,7 @@
-package com.analyzer.modules.parser.pipeline.stage;
+package com.analyzer.infrastructure.vectorstore;
 
-import com.analyzer.modules.parser.model.VectorDocument;
-import com.analyzer.modules.parser.model.VectorSearchResult;
+import com.analyzer.infrastructure.vectorstore.model.VectorDocument;
+import com.analyzer.infrastructure.vectorstore.model.VectorSearchResult;
 
 import java.util.List;
 import java.util.Map;

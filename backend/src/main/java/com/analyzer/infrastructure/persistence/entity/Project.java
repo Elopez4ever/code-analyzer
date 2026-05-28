@@ -1,4 +1,4 @@
-package com.analyzer.infrastructure.entity;
+package com.analyzer.infrastructure.persistence.entity;
 
 import lombok.Data;
 

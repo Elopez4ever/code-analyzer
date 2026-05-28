@@ -1,6 +1,6 @@
 package com.analyzer.modules.parser.service;
 
-import com.analyzer.infrastructure.entity.ProjectStatus;
+import com.analyzer.infrastructure.persistence.entity.ProjectStatus;
 import com.analyzer.modules.parser.pipeline.ProjectParsingPipeline;
 import com.analyzer.modules.project.service.ProjectPersistenceService;
 import lombok.RequiredArgsConstructor;
