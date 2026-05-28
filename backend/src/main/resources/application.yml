@@ -13,3 +13,51 @@ mybatis-plus:
 app:
   project:
     upload-path: D:\projects
+
+code-parser:
+  exclude-patterns:
+    - "**/target/**"
+    - "**/build/**"
+    - "**/.git/**"
+    - "**/.idea/**"
+    - "**/.vscode/**"
+    - "**/node_modules/**"
+    - "**/*.class"
+    - "**/*.jar"
+    - "**/*.war"
+  rules:
+    - language: JAVA
+      extensions: [".java"]
+      priority: 1
+    - language: XML_MYBATIS
+      extensions: [".xml"]
+      path-patterns: ["**/mapper/**", "**/*Mapper.xml", "**/*Dao.xml"]
+      priority: 10
+    - language: XML_POM
+      file-names: ["pom.xml"]
+      priority: 10
+    - language: YAML
+      extensions: [".yml", ".yaml"]
+      priority: 1
+    - language: PROPERTIES
+      extensions: [".properties"]
+      priority: 1
+    - language: SQL
+      extensions: [".sql"]
+      priority: 1
+    - language: DOCKERFILE
+      file-names: ["Dockerfile"]
+      path-patterns: ["**/Dockerfile.*"]
+      priority: 5
+    - language: MARKDOWN
+      extensions: [".md"]
+      priority: 1
+    - language: HTML
+      extensions: [".html", ".htm"]
+      priority: 1
+    - language: JSON
+      extensions: [".json"]
+      priority: 1
+    - language: SHELL
+      extensions: [".sh", ".bash"]
+      priority: 1

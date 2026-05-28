@@ -1,6 +1,7 @@
 package com.analyzer.modules.parser.pipeline;
 
 import com.analyzer.modules.parser.pipeline.domain.CodeChunk;
+import com.analyzer.modules.parser.pipeline.domain.FileLanguage;
 import com.analyzer.modules.parser.pipeline.domain.SourceFile;
 
 import java.util.List;
@@ -10,6 +11,6 @@ import java.util.List;
  * 不同语言有不同的分块策略
  */
 public interface CodeChunker {
-    boolean supports(String language);
+    boolean supports(FileLanguage language);
     List<CodeChunk> chunk(SourceFile sourceFile, String projectId);
 }

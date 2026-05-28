@@ -2,6 +2,7 @@ package com.analyzer.modules.parser.pipeline;
 
 import com.analyzer.modules.parser.pipeline.domain.SourceFile;
 
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -9,9 +10,9 @@ import java.util.List;
  * 不做分块，只做文件级别的提取和过滤
  */
 public interface ProjectParser {
-    boolean supports(String projectPath);
+    boolean supports(Path projectRoot);
     /**
      * 提取项目中需要解析的源文件
      */
-    List<SourceFile> extractFiles(String projectPath);
+    List<SourceFile> parse(Path projectRoot);
 }

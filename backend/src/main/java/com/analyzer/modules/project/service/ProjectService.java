@@ -43,8 +43,9 @@ public class ProjectService {
         log.info("收到项目上传请求: {}, 大小: {}" , fileName , file.getSize());
 
         // 验证文件类型
+        // TODO: 验证文件类型设计问题
         String contentType = fileValidationService.detectContentType(file);
-        validateContentType(contentType);
+//        validateContentType(contentType);
 
         // 检查项目是否存在
         Optional<ProjectPO> existingProject = projectPersistenceService.findExistingResume(projectName);
@@ -105,17 +106,6 @@ public class ProjectService {
     private String generateDefaultProjectName() {
         String timestamp = String.valueOf(System.currentTimeMillis());
         return "未命名项目_" + timestamp;
-    }
-
-    /**
-     * 验证文件类型
-     */
-    private void validateContentType(String contentType) {
-        fileValidationService.validateContentTypeByList(
-                contentType,
-                appConfig.getAllowedTypes(),
-                "不支持的文件类型: " + contentType
-        );
     }
 
     // TODO: unzip Service?
