@@ -4,10 +4,7 @@ import com.analyzer.common.constant.CommonConstants;
 import com.analyzer.common.exception.ErrorCode;
 import lombok.Getter;
 
-/**
- * @Author: Elopez
- * @Date: 5/21/2026
- */
+
 @Getter
 public class Result<T> {
 

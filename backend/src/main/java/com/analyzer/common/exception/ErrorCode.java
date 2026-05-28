@@ -3,10 +3,6 @@ package com.analyzer.common.exception;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-/**
- * @Author: Elopez
- * @Date: 5/21/2026
- */
 @Getter
 @AllArgsConstructor
 public enum ErrorCode {

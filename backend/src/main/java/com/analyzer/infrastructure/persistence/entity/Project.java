@@ -4,10 +4,6 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-/**
- * @Author: Elopez
- * @Date: 5/21/2026
- */
 @Data
 public class Project {
     private Long id;
