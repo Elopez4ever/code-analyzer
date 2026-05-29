@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.Map;
 
 @Data
-@Builder
+@Builder(toBuilder = true)
 public class CodeChunk {
     private String id;
     private String projectId;

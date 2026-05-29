@@ -2,6 +2,7 @@ package com.analyzer.modules.parser.pipeline;
 
 import com.analyzer.infrastructure.embedding.EmbeddingService;
 import com.analyzer.infrastructure.vectorstore.VectorStore;
+import com.analyzer.modules.parser.pipeline.chunker.ChunkerRouter;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,19 +15,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProjectParsingPipeline {
     private final List<ProjectParser> parsers;
-    private final List<CodeChunker> chunkers;
-    private final List<ChunkEnricher> enrichers;
-    private final EmbeddingService embeddingService;
-    private final VectorStore vectorStore;
+    private final ChunkerRouter chunkerRouter;
+    private final EnricherPipeline enricherPipeline;
     private static final String COLLECTION = "code_chunks";
     private static final int BATCH_SIZE = 20;
-
-    @PostConstruct
-    public void init() {
-        if (!vectorStore.collectionExists(COLLECTION)) {
-            vectorStore.createCollection(COLLECTION, embeddingService.dimensions());
-        }
-    }
 
     public void execute(String projectId, String projectPath) {
         
