@@ -1,10 +1,14 @@
-package com.analyzer.modules.parser.pipeline.enricher.rule;
+package com.analyzer.modules.parser.pipeline.detector.enricher.rule;
 
 import com.analyzer.modules.parser.pipeline.domain.CodeChunkType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import java.util.List;
-import static com.analyzer.modules.parser.pipeline.enricher.rule.ExtractionRule.*;
+import static com.analyzer.modules.parser.pipeline.detector.enricher.rule.ExtractionRule.*;
+
+/**
+ * 规则配置
+ */
 @Configuration
 public class RuleDefinitions {
     private static final List<CodeChunkType> JAVA_TYPES = List.of(
@@ -12,6 +16,11 @@ public class RuleDefinitions {
             CodeChunkType.CONTROLLER, CodeChunkType.SERVICE, CodeChunkType.REPOSITORY,
             CodeChunkType.ENTITY, CodeChunkType.CONFIGURATION, CodeChunkType.COMPONENT
     );
+
+    /**
+     * 返回包含解析 java method template... 规则的 Registry
+     * @return 规则
+     */
     @Bean
     public RuleRegistry ruleRegistry() {
         RuleRegistry registry = new RuleRegistry();

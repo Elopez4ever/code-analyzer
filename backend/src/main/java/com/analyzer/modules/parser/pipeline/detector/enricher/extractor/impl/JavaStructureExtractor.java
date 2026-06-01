@@ -1,8 +1,8 @@
-package com.analyzer.modules.parser.pipeline.enricher.extractor.impl;
+package com.analyzer.modules.parser.pipeline.detector.enricher.extractor.impl;
 
 import com.analyzer.modules.parser.pipeline.domain.CodeChunk;
 import com.analyzer.modules.parser.pipeline.domain.CodeChunkType;
-import com.analyzer.modules.parser.pipeline.enricher.extractor.StructureExtractor;
+import com.analyzer.modules.parser.pipeline.detector.enricher.extractor.StructureExtractor;
 
 import java.util.Optional;
 import java.util.Set;

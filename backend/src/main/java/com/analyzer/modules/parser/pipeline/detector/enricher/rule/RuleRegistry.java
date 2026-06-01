@@ -1,4 +1,4 @@
-package com.analyzer.modules.parser.pipeline.enricher.rule;
+package com.analyzer.modules.parser.pipeline.detector.enricher.rule;
 
 import com.analyzer.modules.parser.pipeline.domain.CodeChunkType;
 
@@ -7,6 +7,9 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 规则仓库 从 CodeChunkType 映射到一系列规则
+ */
 public class RuleRegistry {
     private final Map<CodeChunkType, List<ExtractionRule>> keywordRules = new EnumMap<>(CodeChunkType.class);
     private final Map<CodeChunkType, List<ExtractionRule>> metadataRules = new EnumMap<>(CodeChunkType.class);

@@ -1,11 +1,10 @@
-package com.analyzer.modules.parser.pipeline.enricher;
+package com.analyzer.modules.parser.pipeline.detector.enricher;
 
 import com.analyzer.modules.parser.pipeline.ChunkEnricher;
+import com.analyzer.modules.parser.pipeline.detector.enricher.rule.ExtractionRule;
+import com.analyzer.modules.parser.pipeline.detector.enricher.rule.RuleRegistry;
 import com.analyzer.modules.parser.pipeline.domain.CodeChunk;
 import com.analyzer.modules.parser.pipeline.domain.EnricherPriority;
-import com.analyzer.modules.parser.pipeline.domain.FileLanguage;
-import com.analyzer.modules.parser.pipeline.enricher.rule.ExtractionRule;
-import com.analyzer.modules.parser.pipeline.enricher.rule.RuleRegistry;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;

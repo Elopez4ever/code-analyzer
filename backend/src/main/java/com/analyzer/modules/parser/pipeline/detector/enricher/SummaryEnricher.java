@@ -1,4 +1,4 @@
-package com.analyzer.modules.parser.pipeline.enricher;
+package com.analyzer.modules.parser.pipeline.detector.enricher;
 
 import com.analyzer.infrastructure.ai.AIClient;
 import com.analyzer.infrastructure.ai.AIClientFactory;

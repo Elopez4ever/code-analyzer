@@ -1,9 +1,9 @@
-package com.analyzer.modules.parser.pipeline.enricher.extractor.impl;
+package com.analyzer.modules.parser.pipeline.detector.enricher.extractor.impl;
 
+import com.analyzer.modules.parser.pipeline.detector.enricher.extractor.StructureExtractor;
 import com.analyzer.modules.parser.pipeline.domain.CodeChunk;
 import com.analyzer.modules.parser.pipeline.domain.CodeChunkType;
 import com.analyzer.modules.parser.pipeline.domain.FileLanguage;
-import com.analyzer.modules.parser.pipeline.enricher.extractor.StructureExtractor;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
