@@ -2,23 +2,41 @@ package com.analyzer.modules.parser.pipeline.enricher;
 
 import com.analyzer.modules.parser.pipeline.ChunkEnricher;
 import com.analyzer.modules.parser.pipeline.domain.CodeChunk;
+import com.analyzer.modules.parser.pipeline.domain.EnricherPriority;
 import com.analyzer.modules.parser.pipeline.domain.FileLanguage;
+import com.analyzer.modules.parser.pipeline.enricher.rule.ExtractionRule;
+import com.analyzer.modules.parser.pipeline.enricher.rule.RuleRegistry;
+import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 提取关键词/标签：注解名、依赖的类型、设计模式标记
+ */
+@Component
 public class KeywordEnricher implements ChunkEnricher {
-    @Override
-    public List<FileLanguage> supportedLanguages() {
-        return List.of();
+    private final RuleRegistry ruleRegistry;
+    public KeywordEnricher(RuleRegistry ruleRegistry) {
+        this.ruleRegistry = ruleRegistry;
     }
 
     @Override
     public int order() {
-        return 0;
+        return EnricherPriority.KEYWORD.getOrder();
     }
 
     @Override
     public CodeChunk enrich(CodeChunk chunk) {
-        return null;
+        List<String> keywords = new ArrayList<>();
+        keywords.add("type:" + chunk.getChunkType().name().toLowerCase());
+        List<ExtractionRule> rules = ruleRegistry.getKeywordRules(chunk.getChunkType());
+        for (ExtractionRule rule : rules) {
+            if (rule.matches(chunk)) {
+                keywords.add(rule.output());
+            }
+        }
+        chunk.setKeywords(keywords);
+        return chunk;
     }
 }

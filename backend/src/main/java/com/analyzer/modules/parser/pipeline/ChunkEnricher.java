@@ -11,9 +11,11 @@ import java.util.List;
  */
 public interface ChunkEnricher {
     /**
-     * 声明支持的语言，null 表示支持所有语言
+     * 声明支持的语言，空列表表示支持所有语言
      */
-    List<FileLanguage> supportedLanguages();
+    default List<FileLanguage> supportedLanguages() {
+        return List.of();
+    }
     /**
      * enricher 执行顺序，数字越小越先执行
      */

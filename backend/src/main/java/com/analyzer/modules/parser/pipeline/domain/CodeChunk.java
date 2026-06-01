@@ -3,6 +3,8 @@ package com.analyzer.modules.parser.pipeline.domain;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -12,11 +14,16 @@ public class CodeChunk {
     private String projectId;
     private String filePath;
     private FileLanguage language;
-    private String chunkType;       // CLASS, METHOD, CONFIG_BLOCK, SQL_STATEMENT, etc.
-    private String name;            // 类名、方法名、配置 key 等
+    private CodeChunkType chunkType;       // CLASS, METHOD, CONFIG_BLOCK, SQL_STATEMENT, etc.
     private String content;
     private int startLine;
     private int endLine;
-    private String summary;         // enricher 填充
-    private Map<String, String> metadata;
+
+    // --- enricher 需要填充的字段 ---
+    private String className;
+    private String methodName;
+    private String packageName;
+    private List<String> keywords;
+    private String summary;           // 自然语言摘要
+    private HashMap<String, String> metadata;
 }
