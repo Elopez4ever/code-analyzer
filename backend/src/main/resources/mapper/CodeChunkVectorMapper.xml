@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.analyzer.infrastructure.vectorstore.CodeChunkVectorMapper">
+
+    <resultMap id="searchResultMap" type="com.analyzer.infrastructure.vectorstore.dto.VectorSearchResult">
+        <result column="id" property="id"/>
+        <result column="project_id" property="projectId"/>
+        <result column="file_path" property="filePath"/>
+        <result column="language" property="language"/>
+        <result column="chunk_type" property="chunkType"/>
+        <result column="start_line" property="startLine"/>
+        <result column="end_line" property="endLine"/>
+        <result column="content" property="content"/>
+        <result column="summary" property="summary"/>
+        <result column="metadata" property="metadata"
+                typeHandler="com.analyzer.infrastructure.vectorstore.handler.JsonbMapTypeHandler"/>
+        <result column="keywords" property="keywords"
+                typeHandler="com.analyzer.infrastructure.vectorstore.handler.JsonbListTypeHandler"/>
+        <result column="score" property="score"/>
+    </resultMap>
+
+    <!-- 批量 upsert -->
+    <insert id="batchUpsert">
+        INSERT INTO code_chunks (id, project_id, file_path, language, chunk_type,
+        start_line, end_line, content, summary, embedding, metadata, keywords)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.id},
+            #{item.projectId},
+            #{item.filePath},
+            #{item.language},
+            #{item.chunkType},
+            #{item.startLine},
+            #{item.endLine},
+            #{item.content},
+            #{item.summary},
+            #{item.embedding, typeHandler=com.analyzer.infrastructure.vectorstore.handler.VectorTypeHandler}::vector,
+            #{item.metadata, typeHandler=com.analyzer.infrastructure.vectorstore.handler.JsonbMapTypeHandler}::jsonb,
+            #{item.keywords, typeHandler=com.analyzer.infrastructure.vectorstore.handler.JsonbListTypeHandler}::jsonb
+            )
+        </foreach>
+        ON CONFLICT (id) DO UPDATE SET
+        file_path  = EXCLUDED.file_path,
+        language   = EXCLUDED.language,
+        chunk_type = EXCLUDED.chunk_type,
+        start_line = EXCLUDED.start_line,
+        end_line   = EXCLUDED.end_line,
+        content    = EXCLUDED.content,
+        summary    = EXCLUDED.summary,
+        embedding  = EXCLUDED.embedding,
+        metadata   = EXCLUDED.metadata,
+        keywords   = EXCLUDED.keywords
+    </insert>
+
+    <!-- 纯相似度检索 -->
+    <select id="searchSimilar" resultMap="searchResultMap">
+        SELECT id, project_id, file_path, language, chunk_type,
+               start_line, end_line, content, summary, metadata, keywords,
+               1 - (embedding &lt;=&gt; #{queryVector}::vector) AS score
+        FROM code_chunks
+        WHERE project_id = #{projectId}
+        ORDER BY embedding &lt;=&gt; #{queryVector}::vector
+        LIMIT #{topK}
+    </select>
+
+    <!-- 带过滤条件的检索 -->
+    <select id="searchWithFilter" resultMap="searchResultMap">
+        SELECT id, project_id, file_path, language, chunk_type,
+        start_line, end_line, content, summary, metadata, keywords,
+        1 - (embedding &lt;=&gt; #{queryVector}::vector) AS score
+        FROM code_chunks
+        WHERE project_id = #{projectId}
+        <if test="language != null and language != ''">
+            AND language = #{language}
+        </if>
+        <if test="chunkType != null and chunkType != ''">
+            AND chunk_type = #{chunkType}
+        </if>
+        <if test="filePath != null and filePath != ''">
+            AND file_path LIKE #{filePath} || '%'
+        </if>
+        <if test="metadataFilters != null and metadataFilters.size() > 0">
+            <foreach collection="metadataFilters.entrySet()" item="entry" index="key">
+                AND metadata->>#{entry.key} = #{entry.value}
+            </foreach>
+        </if>
+        ORDER BY embedding &lt;=&gt; #{queryVector}::vector
+        LIMIT #{topK}
+    </select>
+
+    <!-- 按项目删除 -->
+    <delete id="deleteByProjectId">
+        DELETE FROM code_chunks WHERE project_id = #{projectId}
+    </delete>
+
+    <!-- 按项目+文件删除（增量更新时先删旧数据） -->
+    <delete id="deleteByProjectAndFile">
+        DELETE FROM code_chunks WHERE project_id = #{projectId} AND file_path = #{filePath}
+    </delete>
+
+</mapper>
