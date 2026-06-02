@@ -35,6 +35,6 @@ public class EnricherPipeline {
 
     private boolean supportsLanguage(ChunkEnricher enricher, FileLanguage language) {
         List<FileLanguage> supported = enricher.supportedLanguages();
-        return supported == null || supported.contains(language);
+        return supported.isEmpty()|| supported.contains(language);
     }
 }

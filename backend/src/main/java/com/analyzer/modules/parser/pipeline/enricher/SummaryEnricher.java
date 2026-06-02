@@ -27,6 +27,7 @@ public class SummaryEnricher implements ChunkEnricher {
         return EnricherPriority.SUMMARY.getOrder();
     }
 
+    // TODO: 参数化调用模型
     @Override
     public CodeChunk enrich(CodeChunk chunk) {
         try {
