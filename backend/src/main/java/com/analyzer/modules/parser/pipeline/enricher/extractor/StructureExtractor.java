@@ -1,4 +1,4 @@
-package com.analyzer.modules.parser.pipeline.detector.enricher.extractor;
+package com.analyzer.modules.parser.pipeline.enricher.extractor;
 
 import com.analyzer.modules.parser.pipeline.domain.CodeChunk;
 import com.analyzer.modules.parser.pipeline.domain.CodeChunkType;

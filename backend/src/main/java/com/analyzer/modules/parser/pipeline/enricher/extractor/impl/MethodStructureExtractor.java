@@ -1,6 +1,6 @@
-package com.analyzer.modules.parser.pipeline.detector.enricher.extractor.impl;
+package com.analyzer.modules.parser.pipeline.enricher.extractor.impl;
 
-import com.analyzer.modules.parser.pipeline.detector.enricher.extractor.StructureExtractor;
+import com.analyzer.modules.parser.pipeline.enricher.extractor.StructureExtractor;
 import com.analyzer.modules.parser.pipeline.domain.CodeChunk;
 import com.analyzer.modules.parser.pipeline.domain.CodeChunkType;
 import com.analyzer.modules.parser.pipeline.domain.FileLanguage;
@@ -27,11 +27,12 @@ public class MethodStructureExtractor implements StructureExtractor {
     public void extract(CodeChunk chunk) {
         String content = chunk.getContent();
         if (chunk.getLanguage() == FileLanguage.JAVA) {
-            match(JAVA_METHOD, content, 1).ifPresent(chunk::setMethodName);
+
+            match(JAVA_METHOD, content, 1).ifPresent(v -> chunk.getMetadata().put("method", v));
         } else {
             Matcher m = JS_FUNCTION.matcher(content);
             if (m.find()) {
-                chunk.setMethodName(m.group(1) != null ? m.group(1) : m.group(2));
+                chunk.getMetadata().put("method", m.group(1) != null ? m.group(1) : m.group(2));
             }
         }
         match(PARAMS, content, 1).ifPresent(params -> {

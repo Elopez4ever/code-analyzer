@@ -1,4 +1,4 @@
-package com.analyzer.modules.parser.pipeline.detector.enricher.rule;
+package com.analyzer.modules.parser.pipeline.enricher.rule;
 
 import com.analyzer.modules.parser.pipeline.domain.CodeChunkType;
 

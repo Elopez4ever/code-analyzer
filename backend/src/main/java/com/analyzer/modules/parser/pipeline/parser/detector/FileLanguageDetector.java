@@ -1,4 +1,4 @@
-package com.analyzer.modules.parser.pipeline.detector;
+package com.analyzer.modules.parser.pipeline.parser.detector;
 
 
 import cn.hutool.core.util.ObjectUtil;

@@ -1,4 +1,4 @@
-package com.analyzer.modules.parser.pipeline.detector.enricher;
+package com.analyzer.modules.parser.pipeline.enricher;
 
 import com.analyzer.infrastructure.ai.AIClient;
 import com.analyzer.infrastructure.ai.AIClientFactory;
@@ -38,7 +38,7 @@ public class SummaryEnricher implements ChunkEnricher {
             return chunk.toBuilder().summary(summary).build();
         } catch (Exception e) {
             log.warn("chunk 总结失败: [{}]", chunk.getId(), e);
-            return chunk;  // 失败不阻断流水线，很好
+            return chunk;  // 失败不阻断 pipeline
         }
     }
 
@@ -52,11 +52,11 @@ public class SummaryEnricher implements ChunkEnricher {
         StringBuilder sb = new StringBuilder();
         sb.append("文件: ").append(chunk.getFilePath()).append("\n");
         sb.append("类型: ").append(chunk.getChunkType()).append("\n");
-        if (chunk.getClassName() != null) {
-            sb.append("类名: ").append(chunk.getClassName()).append("\n");
+        if (chunk.getMetadata().get("className") != null) {
+            sb.append("类名: ").append(chunk.getMetadata().get("className")).append("\n");
         }
-        if (chunk.getMethodName() != null) {
-            sb.append("方法名: ").append(chunk.getMethodName()).append("\n");
+        if (chunk.getMetadata().get("methodName") != null) {
+            sb.append("方法名: ").append(chunk.getMetadata().get("methodName")).append("\n");
         }
         if (chunk.getKeywords() != null && !chunk.getKeywords().isEmpty()) {
             sb.append("关键词: ").append(String.join(", ", chunk.getKeywords())).append("\n");

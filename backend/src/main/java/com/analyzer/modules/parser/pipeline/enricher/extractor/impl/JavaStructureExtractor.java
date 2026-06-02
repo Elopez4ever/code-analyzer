@@ -1,8 +1,8 @@
-package com.analyzer.modules.parser.pipeline.detector.enricher.extractor.impl;
+package com.analyzer.modules.parser.pipeline.enricher.extractor.impl;
 
 import com.analyzer.modules.parser.pipeline.domain.CodeChunk;
 import com.analyzer.modules.parser.pipeline.domain.CodeChunkType;
-import com.analyzer.modules.parser.pipeline.detector.enricher.extractor.StructureExtractor;
+import com.analyzer.modules.parser.pipeline.enricher.extractor.StructureExtractor;
 
 import java.util.Optional;
 import java.util.Set;
@@ -28,8 +28,8 @@ public class JavaStructureExtractor implements StructureExtractor {
     @Override
     public void extract(CodeChunk chunk) {
         String content = chunk.getContent();
-        match(PACKAGE_PATTERN, content, 1).ifPresent(chunk::setPackageName);
-        match(CLASS_PATTERN, content, 1).ifPresent(chunk::setClassName);
+        match(PACKAGE_PATTERN, content, 1).ifPresent(v -> chunk.getMetadata().put("packageName", v));
+        match(CLASS_PATTERN, content, 1).ifPresent(v -> chunk.getMetadata().put("className", v));
         match(EXTENDS_PATTERN, content, 1).ifPresent(v -> chunk.getMetadata().put("extends", v.trim()));
         match(IMPLEMENTS_PATTERN, content, 1).ifPresent(v -> chunk.getMetadata().put("implements", v.trim()));
         chunk.getMetadata().put("stereotype", chunk.getChunkType().name().toLowerCase());

@@ -1,10 +1,10 @@
-package com.analyzer.modules.parser.pipeline.detector.enricher.rule;
+package com.analyzer.modules.parser.pipeline.enricher.rule;
 
 import com.analyzer.modules.parser.pipeline.domain.CodeChunkType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import java.util.List;
-import static com.analyzer.modules.parser.pipeline.detector.enricher.rule.ExtractionRule.*;
+import static com.analyzer.modules.parser.pipeline.enricher.rule.ExtractionRule.*;
 
 /**
  * 规则配置

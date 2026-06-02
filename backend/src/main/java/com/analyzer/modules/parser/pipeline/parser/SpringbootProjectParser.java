@@ -2,7 +2,7 @@ package com.analyzer.modules.parser.pipeline.parser;
 
 import com.analyzer.common.exception.BusinessException;
 import com.analyzer.modules.parser.pipeline.ProjectParser;
-import com.analyzer.modules.parser.pipeline.detector.FileLanguageDetector;
+import com.analyzer.modules.parser.pipeline.parser.detector.FileLanguageDetector;
 import com.analyzer.modules.parser.pipeline.domain.FileLanguage;
 import com.analyzer.modules.parser.pipeline.domain.SourceFile;
 import lombok.RequiredArgsConstructor;
