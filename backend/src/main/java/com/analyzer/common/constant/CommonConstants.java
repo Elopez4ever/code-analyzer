@@ -1,9 +1,5 @@
 package com.analyzer.common.constant;
 
-/**
- * @Author: Elopez
- * @Date: 5/21/2026
- */
 public final class CommonConstants {
 
     private CommonConstants() {}

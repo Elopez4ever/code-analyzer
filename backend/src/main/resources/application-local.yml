@@ -2,40 +2,36 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/code_analyzer
     username: postgres
-    password: <YOUR_DB_PASSWORD>
+    password: your_real_password
+  ai:
+    openai:
+      api-key: sk
+      base-url: https://api.openai.com
+      embedding:
+        options:
+          model: text-embedding-3-small
+          dimensions: 1536
 
 app:
   project:
-    upload-path: <YOUR_PROJECT_PATH>
+    upload-path: /your/real/path
 
 analyzer:
   ai:
-    default-client: deepseek
-    clients:
-      deepseek:
-        base-url: https://api.deepseek.com
-        api-key: <YOUR_DEEPSEEK_API_KEY>
-        model: deepseek-chat
-        temperature: 0.7
-        max-tokens: 2000
-      # openai:
-      #   base-url: https://api.openai.com/v1
-      #   api-key: <YOUR_OPENAI_API_KEY>
-      #   model: gpt-4
-      #   temperature: 0.7
-      #   max-tokens: 2000
-  embedding:
-    default-model: openai
+    default-chat-model: gpt-4o
+    embedding-model: text-embedding-3-small
     models:
-      openai:
-        api-url: https://api.openai.com/v1/embeddings
-        api-key: ${OPENAI_API_KEY}
-        model: text-embedding-3-small
-        dimensions: 1536
-        max-batch-size: 20
-      local:
-        api-url: http://localhost:11434/api/embeddings
+      gpt-4o:
+        provider: openai
+        api-key: sk-
+        base-url: https://api.openai.com/v1
+        model-name: gpt-4o
+        temperature: 0.7
+        max-tokens: 2048
+      ollama-llama3:
+        provider: ollama
         api-key: ""
-        model: nomic-embed-text
-        dimensions: 768
-        max-batch-size: 10
+        base-url: http://localhost:11434
+        model-name: llama3
+        temperature: 0.7
+        max-tokens: 2048

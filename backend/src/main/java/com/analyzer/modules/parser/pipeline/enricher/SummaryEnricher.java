@@ -1,17 +1,12 @@
 package com.analyzer.modules.parser.pipeline.enricher;
 
-import com.analyzer.infrastructure.ai.AIClient;
-import com.analyzer.infrastructure.ai.AIClientFactory;
+import com.analyzer.infrastructure.ai.chat.ChatService;
 import com.analyzer.modules.parser.pipeline.ChunkEnricher;
-import com.analyzer.modules.parser.pipeline.CodeChunker;
 import com.analyzer.modules.parser.pipeline.domain.CodeChunk;
 import com.analyzer.modules.parser.pipeline.domain.EnricherPriority;
-import com.analyzer.modules.parser.pipeline.domain.FileLanguage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * 使用 LLM 生成自然语言摘要
@@ -20,7 +15,12 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class SummaryEnricher implements ChunkEnricher {
-    private final AIClientFactory factory;
+
+    private final ChatService chatService;
+
+    private static final String MODEL_KEY = "deepseek";
+    private static final String SYSTEM_PROMPT =
+            "你是一个代码分析助手，用简洁的中文总结代码片段的功能，不超过两句话。";
 
     @Override
     public int order() {
@@ -31,11 +31,7 @@ public class SummaryEnricher implements ChunkEnricher {
     @Override
     public CodeChunk enrich(CodeChunk chunk) {
         try {
-            AIClient aiClient = factory.getClient("deepseek");
-            String summary = aiClient.chat(
-                    "你是一个代码分析助手，用简洁的中文总结代码片段的功能，不超过两句话。",
-                    buildUserPrompt(chunk)
-            );
+            String summary = chatService.chat(MODEL_KEY, SYSTEM_PROMPT, buildUserPrompt(chunk));
             return chunk.toBuilder().summary(summary).build();
         } catch (Exception e) {
             log.warn("chunk 总结失败: [{}]", chunk.getId(), e);
