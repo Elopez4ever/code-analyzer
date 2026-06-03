@@ -1,5 +1,6 @@
 package com.analyzer.infrastructure.vectorstore.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.analyzer.infrastructure.vectorstore.VectorStoreService;
 import com.analyzer.infrastructure.vectorstore.entity.CodeChunkVector;
 import com.analyzer.infrastructure.vectorstore.mapper.CodeChunkVectorMapper;
@@ -18,10 +19,15 @@ import java.util.List;
 public class VectorStoreServiceImpl implements VectorStoreService {
     private final CodeChunkVectorMapper mapper;
     private static final int BATCH_SIZE = 50;
+
+    /**
+     * 批量存储代码块向量
+     * @param chunks 代码块向量
+     */
     @Override
     @Transactional
     public void storeBatch(List<CodeChunkVector> chunks) {
-        if (chunks == null || chunks.isEmpty()) {
+        if (ObjectUtil.isNull(chunks) || chunks.isEmpty()) {
             return;
         }
         // 分批写入，避免单条 SQL 太大
@@ -32,6 +38,7 @@ public class VectorStoreServiceImpl implements VectorStoreService {
         log.debug("stored {} chunks in {} batches", chunks.size(),
                 (chunks.size() + BATCH_SIZE - 1) / BATCH_SIZE);
     }
+
     @Override
     public List<VectorSearchResult> search(VectorSearchRequest request) {
         String vectorStr = toVectorString(request.getQueryVector());

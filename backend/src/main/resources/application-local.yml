@@ -2,7 +2,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/code_analyzer
     username: postgres
-    password: your_real_password
+    password: 123456
   ai:
     openai:
       api-key: sk

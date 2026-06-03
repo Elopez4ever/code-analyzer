@@ -11,12 +11,15 @@ import java.util.Map;
 
 @Mapper
 public interface CodeChunkVectorMapper extends BaseMapper<CodeChunkVector> {
+
     void batchUpsert(@Param("list") List<CodeChunkVector> list);
+
     List<VectorSearchResult> searchSimilar(
             @Param("queryVector") String queryVector,
             @Param("projectId") String projectId,
             @Param("topK") int topK
     );
+
     List<VectorSearchResult> searchWithFilter(
             @Param("queryVector") String queryVector,
             @Param("projectId") String projectId,
@@ -26,6 +29,8 @@ public interface CodeChunkVectorMapper extends BaseMapper<CodeChunkVector> {
             @Param("filePath") String filePath,
             @Param("metadataFilters") Map<String, String> metadataFilters
     );
+
     void deleteByProjectId(@Param("projectId") String projectId);
+
     void deleteByProjectAndFile(@Param("projectId") String projectId, @Param("filePath") String filePath);
 }
