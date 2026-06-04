@@ -204,6 +204,7 @@ img {
 .app-main {
   flex: 1;
   padding: 0;
+  min-height: 0; /* 关键：允许 flex 子项缩小，配合子元素的 height:100% */
 }
 
 .page-enter-active,

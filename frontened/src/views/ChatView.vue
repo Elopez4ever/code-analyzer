@@ -11,6 +11,7 @@ const messagesRef = ref(null)
 const input = ref('')
 const messages = ref([])
 const selectedModel = ref('default')
+const sidebarOpen = ref(true)
 const modelOptions = [
   { value: 'default', label: '默认模型' },
   { value: 'quality', label: '高质量模型' },
@@ -71,6 +72,18 @@ const sendMessage = async () => {
   await scrollToBottom()
 }
 
+const handleKeydown = (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault()
+    sendMessage()
+  }
+}
+
+const clearMessages = () => {
+  messages.value = []
+  persistMessages()
+}
+
 watch(storageKey, () => {
   loadMessages()
   loadModel()
@@ -89,99 +102,587 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page">
-    <div v-if="!project" class="card empty-state">
+  <!-- NOT using .page class — this component manages its own full-bleed layout -->
+  <div class="chat-page-root">
+    <div v-if="!project" class="chat-not-found">
       <h3>项目不存在</h3>
-      <p class="muted">请返回项目列表重新选择。</p>
+      <p>请返回项目列表重新选择。</p>
       <RouterLink to="/projects" class="btn btn-primary">返回项目列表</RouterLink>
     </div>
 
-    <div v-else class="chat-layout chatgpt-layout">
-      <aside class="card chat-sidebar">
-        <h3 class="chat-title">{{ project.name }}</h3>
-        <p class="muted">{{ project.source }}</p>
-        <div class="chat-meta">
-          <div>
-            <div class="meta-label">来源</div>
-            <div class="meta-value">{{ project.sourceType }}</div>
+    <template v-else>
+      <!-- Sidebar -->
+      <aside class="chat-sidebar" :class="{ 'is-collapsed': !sidebarOpen }">
+        <div class="sidebar-head">
+          <button class="sidebar-btn" @click="sidebarOpen = false" title="收起侧边栏">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <line x1="9" y1="3" x2="9" y2="21" />
+            </svg>
+          </button>
+          <button class="sidebar-btn" @click="clearMessages" title="清空对话">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="sidebar-body">
+          <div class="sidebar-project">
+            <div class="sidebar-project-name">{{ project.name }}</div>
+            <div class="sidebar-project-src">{{ project.source }}</div>
           </div>
-          <div>
-            <div class="meta-label">状态</div>
-            <StatusBadge :status="project.status" />
+
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">项目信息</div>
+            <div class="sidebar-info-row">
+              <span>来源</span>
+              <span class="sidebar-info-val">{{ project.sourceType }}</span>
+            </div>
+            <div class="sidebar-info-row">
+              <span>状态</span>
+              <StatusBadge :status="project.status" />
+            </div>
+            <div class="sidebar-info-row">
+              <span>更新</span>
+              <span class="sidebar-info-val">{{ formatDateTime(project.updatedAt) }}</span>
+            </div>
           </div>
-          <div>
-            <div class="meta-label">更新时间</div>
-            <div class="meta-value">{{ formatDateTime(project.updatedAt) }}</div>
+
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">建议提问</div>
+            <button class="sidebar-suggest" @click="input = '这个项目的核心模块有哪些？'">
+              这个项目的核心模块有哪些？
+            </button>
+            <button class="sidebar-suggest" @click="input = '找出主要的调用链路。'">
+              找出主要的调用链路。
+            </button>
+            <button class="sidebar-suggest" @click="input = '说明数据流转过程。'">
+              说明数据流转过程。
+            </button>
           </div>
         </div>
-        <div class="chat-tips">
-          <div class="meta-label">建议提问</div>
-          <ul>
-            <li>这个项目的核心模块有哪些？</li>
-            <li>找出主要的调用链路。</li>
-            <li>说明数据流转过程。</li>
-          </ul>
+
+        <div class="sidebar-foot">
+          <RouterLink to="/projects" class="sidebar-back">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            返回项目列表
+          </RouterLink>
         </div>
       </aside>
 
-      <section class="chat-panel chatgpt-panel">
-        <header class="chat-panel-header chatgpt-header">
-          <div>
-            <h3>项目对话</h3>
-            <p class="muted">聚焦当前项目的结构与代码细节。</p>
-          </div>
-          <div class="chat-header-actions">
-            <label class="select-field">
-              <span class="select-label">模型</span>
-              <select v-model="selectedModel" class="select">
-                <option v-for="option in modelOptions" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
-            </label>
-            <RouterLink to="/projects" class="btn btn-ghost">返回列表</RouterLink>
+      <!-- Main chat panel -->
+      <div class="chat-main">
+        <!-- Top bar -->
+        <header class="chat-topbar">
+          <button v-if="!sidebarOpen" class="sidebar-btn" @click="sidebarOpen = true" title="展开侧边栏">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <line x1="9" y1="3" x2="9" y2="21" />
+            </svg>
+          </button>
+          <div class="topbar-model">
+            <select v-model="selectedModel">
+              <option v-for="opt in modelOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            </select>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
           </div>
         </header>
 
-        <div v-if="!isReady" class="banner warning">
-          <strong>解析未完成：</strong>
-          <span>项目解析完成后即可开始问答。</span>
+        <!-- Warning -->
+        <div v-if="!isReady" class="chat-warning">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          项目解析完成后即可开始问答
         </div>
 
-        <div ref="messagesRef" class="chat-messages chatgpt-messages">
-          <div v-if="messages.length === 0" class="chat-empty chatgpt-empty">
-            有什么想问的吗？
-            <div class="chatgpt-empty-subtitle">从项目结构、模块职责或调用链开始提问。</div>
+        <!-- Messages area -->
+        <div ref="messagesRef" class="chat-messages-area">
+          <div v-if="messages.length === 0" class="chat-empty-state">
+            <div class="chat-empty-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+            </div>
+            <div class="chat-empty-title">有什么想问的吗？</div>
+            <div class="chat-empty-sub">从项目结构、模块职责或调用链开始提问</div>
           </div>
-          <div v-for="(message, index) in messages" :key="index" class="chat-row" :class="message.role">
-            <div class="chat-row-inner">
-              <div class="chatgpt-avatar">{{ message.role === 'user' ? '你' : 'AI' }}</div>
-              <div class="chat-row-content">
-                <div class="chat-row-meta">
-                  <span class="chat-name">{{ message.role === 'user' ? '你' : 'AI' }}</span>
-                  <span class="chat-time">{{ formatDateTime(message.createdAt) }}</span>
+
+          <template v-else>
+            <div
+              v-for="(msg, i) in messages"
+              :key="i"
+              class="msg-row"
+              :class="msg.role"
+            >
+              <div class="msg-row-inner">
+                <div class="msg-avatar" :class="msg.role">
+                  {{ msg.role === 'user' ? '你' : 'AI' }}
                 </div>
-                <div class="chat-text">{{ message.content }}</div>
+                <div class="msg-content">
+                  <div class="msg-sender">{{ msg.role === 'user' ? '你' : 'Code Analyzer' }}</div>
+                  <div class="msg-text">{{ msg.content }}</div>
+                </div>
               </div>
             </div>
-          </div>
+          </template>
         </div>
 
-        <div class="chat-composer">
-          <div class="chat-composer-inner">
+        <!-- Input area -->
+        <div class="chat-input-area">
+          <div class="chat-input-box">
             <textarea
               v-model="input"
-              class="chat-composer-input"
-              placeholder="输入问题，例如：这个项目的入口文件在哪里？"
+              class="chat-textarea"
+              :placeholder="isReady ? '给 Code Analyzer 发送消息' : '项目解析中，请稍候…'"
               :disabled="!isReady"
+              rows="1"
+              @keydown="handleKeydown"
+              @input="e => { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 180) + 'px' }"
             ></textarea>
-            <button class="btn btn-primary" :disabled="!input.trim() || !isReady" @click="sendMessage">
-              发送
+            <button
+              class="chat-send-btn"
+              :disabled="!input.trim() || !isReady"
+              @click="sendMessage"
+              title="发送"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="19" x2="12" y2="5" />
+                <polyline points="5 12 12 5 19 12" />
+              </svg>
             </button>
           </div>
-          <div class="chat-hint">{{ isReady ? 'Enter 发送' : '解析完成后可发送问题' }}</div>
+          <div class="chat-input-hint">Code Analyzer 可能会犯错，请核查重要信息。</div>
         </div>
-      </section>
-    </div>
+      </div>
+    </template>
   </div>
 </template>
+
+<style scoped>
+/*
+ * This page fills the entire space provided by .app-main.
+ * We override the parent .page constraints via the root element.
+ */
+.chat-page-root {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+}
+.chat-not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 12px;
+  color: var(--muted);
+}
+
+/* ============ SIDEBAR ============ */
+.chat-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+  transition: width 0.25s ease, opacity 0.25s ease;
+}
+
+.chat-sidebar.is-collapsed {
+  width: 0;
+  opacity: 0;
+  pointer-events: none;
+  border-right: none;
+}
+
+.sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  flex-shrink: 0;
+}
+
+.sidebar-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sidebar-btn:hover {
+  background: var(--surface-muted);
+}
+
+.sidebar-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.sidebar-project {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-project-name {
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-project-src {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+  word-break: break-all;
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebar-section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  font-weight: 600;
+  padding-left: 4px;
+  margin-bottom: 2px;
+}
+
+.sidebar-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 6px;
+  font-size: 13px;
+  color: var(--muted);
+  border-radius: 6px;
+}
+
+.sidebar-info-val {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.sidebar-suggest {
+  text-align: left;
+  border: none;
+  background: var(--surface-muted);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s;
+  line-height: 1.4;
+}
+
+.sidebar-suggest:hover {
+  background: var(--border);
+}
+
+.sidebar-foot {
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sidebar-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  padding: 8px 6px;
+  border-radius: 8px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-back:hover {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+/* ============ MAIN ============ */
+.chat-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top bar */
+.chat-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  flex-shrink: 0;
+  min-height: 48px;
+}
+
+.topbar-model {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.topbar-model select {
+  appearance: none;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  padding: 6px 22px 6px 6px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.topbar-model select:hover {
+  background: var(--surface-muted);
+}
+
+.topbar-model svg {
+  position: absolute;
+  right: 4px;
+  pointer-events: none;
+  color: var(--muted);
+}
+
+/* Warning */
+.chat-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--warning);
+  background: rgba(245, 158, 11, 0.08);
+  flex-shrink: 0;
+}
+
+/* Messages */
+.chat-messages-area {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 20px;
+}
+
+.chat-empty-icon {
+  color: var(--muted);
+  opacity: 0.4;
+  margin-bottom: 8px;
+}
+
+.chat-empty-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.chat-empty-sub {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.msg-row {
+  padding: 20px 0;
+}
+
+.msg-row.assistant {
+  background: var(--surface-muted);
+}
+
+.msg-row-inner {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px;
+  width: 100%;
+}
+
+.msg-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  color: white;
+}
+
+.msg-avatar.user {
+  background: #64748b;
+}
+
+.msg-avatar.assistant {
+  background: var(--primary-gradient);
+}
+
+.msg-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.msg-sender {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.msg-text {
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Input */
+.chat-input-area {
+  flex-shrink: 0;
+  padding: 12px 24px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.chat-input-box {
+  max-width: 720px;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 8px 10px 8px 18px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.chat-input-box:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 2px 16px rgba(91, 108, 255, 0.1);
+}
+
+.chat-textarea {
+  flex: 1;
+  border: none;
+  background: transparent;
+  resize: none;
+  min-height: 24px;
+  max-height: 180px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  padding: 5px 0;
+  overflow-y: auto;
+}
+
+.chat-textarea:focus {
+  outline: none;
+}
+
+.chat-textarea::placeholder {
+  color: var(--muted);
+}
+
+.chat-send-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--text);
+  color: var(--bg);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.chat-send-btn:hover:not(:disabled) {
+  transform: scale(1.06);
+}
+
+.chat-send-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.chat-input-hint {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 768px) {
+  .chat-sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 50;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .chat-sidebar.is-collapsed {
+    box-shadow: none;
+  }
+
+  .msg-row-inner {
+    padding: 0 14px;
+  }
+
+  .chat-input-area {
+    padding: 10px 14px 14px;
+  }
+}
+</style>
