@@ -1,0 +1,37 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/code_analyzer
+    username: postgres
+    password: <YOUR_DB_PASSWORD>
+  ai:
+    openai:
+      api-key: <YOUR_OPENAI_API_KEY>
+      base-url: https://api.openai.com
+      embedding:
+        options:
+          model: text-embedding-3-small
+          dimensions: 1536
+
+app:
+  project:
+    upload-path: <YOUR_PROJECT_UPLOAD_PATH>
+
+analyzer:
+  ai:
+    default-chat-model: gpt-4o
+    embedding-model: text-embedding-3-small
+    models:
+      gpt-4o:
+        provider: openai
+        api-key: <YOUR_OPENAI_API_KEY>
+        base-url: https://api.openai.com/v1
+        model-name: gpt-4o
+        temperature: 0.7
+        max-tokens: 2048
+      ollama-llama3:
+        provider: ollama
+        api-key: ""
+        base-url: http://localhost:11434
+        model-name: llama3
+        temperature: 0.7
+        max-tokens: 2048
