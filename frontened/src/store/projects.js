@@ -58,8 +58,8 @@ function addProject(project) {
   scheduleParsing(project.id)
 }
 
-function addProjectFromGit(url) {
-  const name = deriveNameFromGit(url)
+function addProjectFromGit(url, customName) {
+  const name = customName?.trim() || deriveNameFromGit(url)
   const project = {
     id: createId(),
     name,
@@ -71,8 +71,8 @@ function addProjectFromGit(url) {
   addProject(project)
 }
 
-function addProjectFromZip(file) {
-  const name = deriveNameFromZip(file.name)
+function addProjectFromZip(file, customName) {
+  const name = customName?.trim() || deriveNameFromZip(file.name)
   const project = {
     id: createId(),
     name,
