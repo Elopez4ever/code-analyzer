@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import logo from './assets/logo.svg'
 
 const theme = ref('light')
 const isDark = computed(() => theme.value === 'dark')
@@ -33,11 +34,7 @@ onMounted(() => {
   <div class="app-shell">
     <header class="app-header">
       <div class="brand">
-        <div class="brand-mark">CA</div>
-        <div>
-          <div class="brand-title">Code Analyzer</div>
-          <div class="brand-subtitle">代码知识库与问答平台</div>
-        </div>
+        <img :src="logo" alt="Code Analyzer" class="brand-logo" />
       </div>
       <nav class="nav">
         <RouterLink to="/" class="nav-link">首页</RouterLink>
