@@ -34,63 +34,32 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="root" class="page home">
+  <div ref="root" class="page-home-wrapper">
     <section class="home-section home-hero">
       <div class="container">
         <div class="hero hero-centered">
+          <div class="hero-badge">AI-Powered Code Analysis</div>
           <h1>
-            <span class="gradient-text">代码解析</span>与项目化问答平台
+            用 <span class="gradient-text">AI</span> 读懂你的代码库
           </h1>
           <p class="hero-subtitle">
-            上传项目后自动解析结构，项目列表清晰展示状态，准备好即可进入对话页问答。
+            上传项目，自动解析代码结构，构建知识索引，然后像对话一样探索你的代码。
           </p>
           <div class="hero-actions">
-            <RouterLink to="/upload" class="btn btn-primary">快速开始</RouterLink>
-            <RouterLink to="/projects" class="btn btn-ghost">查看项目</RouterLink>
+            <RouterLink to="/upload" class="btn btn-primary btn-lg">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M12 3a1 1 0 0 1 1 1v9.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4a1 1 0 0 1 1-1Zm-7 14a1 1 0 0 1 1 1v2h14v-2a1 1 0 1 1 2 0v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1Z"/>
+              </svg>
+              立即开始
+            </RouterLink>
+            <RouterLink to="/projects" class="btn btn-ghost btn-lg">查看项目</RouterLink>
           </div>
           <div class="hero-badges">
             <span class="badge-chip">Git URL</span>
             <span class="badge-chip">ZIP 上传</span>
-            <span class="badge-chip">对话问答</span>
+            <span class="badge-chip">智能问答</span>
+            <span class="badge-chip">向量检索</span>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="home-section home-features reveal">
-      <div class="container">
-        <div class="feature-grid">
-          <div class="card feature-card">
-            <span class="feature-index">01</span>
-            <h3>自动解析</h3>
-            <p class="muted">结构化拆解项目代码，快速形成可检索的知识视图。</p>
-          </div>
-          <div class="card feature-card">
-            <span class="feature-index">02</span>
-            <h3>项目管理</h3>
-            <p class="muted">清晰的项目列表与状态追踪，让解析进度一目了然。</p>
-          </div>
-          <div class="card feature-card">
-            <span class="feature-index">03</span>
-            <h3>对话问答</h3>
-            <p class="muted">基于项目上下文进行问答，定位模块、链路更高效。</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="home-section home-callout reveal">
-      <div class="container">
-        <div class="hero-callout card hero-card-glow">
-          <div>
-            <div class="hero-card-title">使用指引</div>
-            <p class="muted">
-              1. 进入上传页面选择 Git 或 ZIP<br />
-              2. 上传后自动跳转到项目列表<br />
-              3. 解析就绪后点击进入对话
-            </p>
-          </div>
-          <RouterLink to="/upload" class="btn btn-primary">立即上传</RouterLink>
         </div>
       </div>
     </section>
@@ -98,43 +67,165 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.home-hero {
+.page-home-wrapper {
   min-height: calc(100vh - 64px);
+  display: flex !important;
+  flex-direction: column;
+}
+
+.page-home-wrapper .home-hero {
+  flex: 1;
   display: flex;
   align-items: center;
   padding: 0 32px;
+  background: var(--bg);
+}
+
+.home-hero .hero {
+  text-align: center;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.hero-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--primary);
+  margin-bottom: 24px;
 }
 
 .home-hero .hero h1 {
-  font-size: 56px;
-  line-height: 1.2;
-  margin: 0 0 16px;
+  font-size: 64px;
+  line-height: 1.1;
+  margin: 0 0 20px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.home-hero .hero h1 .gradient-text {
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .home-hero .hero-subtitle {
-  font-size: 18px;
+  font-size: 20px;
+  color: var(--muted);
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.6;
 }
 
 .home-hero .hero-actions {
-  margin-top: 32px;
+  margin-top: 40px;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
 }
 
-.home-features {
-  padding: 80px 32px;
-  border-top: 1px solid var(--border);
+.btn-lg {
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
 }
 
-.home-callout {
-  padding: 64px 32px 96px;
+.btn-lg .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.btn-primary.btn-lg {
+  background: var(--primary-gradient);
+  box-shadow: 0 4px 24px rgba(99, 102, 241, 0.4);
+}
+
+.btn-primary.btn-lg:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.5);
+}
+
+.btn-ghost.btn-lg {
+  background: var(--primary-gradient);
+  box-shadow: 0 4px 24px rgba(99, 102, 241, 0.4);
+  color: #ffffff;
+}
+
+.btn-ghost.btn-lg:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.5);
+}
+
+.hero-badges {
+  margin-top: 48px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.badge-chip {
+  padding: 8px 16px;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  border-radius: 9999px;
+  font-size: 14px;
+  color: var(--primary);
+  font-weight: 500;
 }
 
 @media (max-width: 1024px) {
   .home-hero .hero h1 {
-    font-size: 36px;
+    font-size: 42px;
   }
 
-  .home-features {
-    padding: 56px 24px;
+  .hero-subtitle {
+    font-size: 18px;
+  }
+
+  .btn-lg {
+    padding: 12px 24px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-hero .hero h1 {
+    font-size: 32px;
+  }
+
+  .hero-subtitle {
+    font-size: 16px;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+  }
+
+  .btn-lg {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hero-badges {
+    gap: 8px;
+  }
+
+  .badge-chip {
+    padding: 6px 12px;
+    font-size: 13px;
   }
 }
 </style>
