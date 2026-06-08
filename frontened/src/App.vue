@@ -81,9 +81,5 @@ onMounted(() => {
       </RouterView>
     </main>
 
-    <footer class="app-footer">
-      <span>© 2026 Code Analyzer</span>
-      <span>让代码结构与知识沉淀更简单</span>
-    </footer>
   </div>
 </template>
