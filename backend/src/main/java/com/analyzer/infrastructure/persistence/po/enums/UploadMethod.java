@@ -6,10 +6,9 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum ProjectStatus {
-    PARSING(0),
-    READY(1),
-    FAILED(-1);
+public enum UploadMethod {
+    GIT(0),
+    ZIP(1);
 
     @EnumValue
     private final int value;

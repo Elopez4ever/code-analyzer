@@ -1,4 +1,4 @@
-package com.analyzer.modules.project.model.dto;
+package com.analyzer.modules.project.model;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;

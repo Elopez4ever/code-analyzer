@@ -9,6 +9,15 @@ mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs        # API 文档 JSON 路径
+  swagger-ui:
+    path: /swagger-ui.html    # UI 访问路径
+    tags-sorter: alpha         # 按字母排序标签
+    operations-sorter: alpha   # 按字母排序接口
+  packages-to-scan: com.analyzer.modules  # 扫描范围
+
 code-parser:
   exclude-patterns:
     - "**/target/**"

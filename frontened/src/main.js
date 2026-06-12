@@ -1,5 +1,7 @@
 import { createApp } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
+import Antd from 'ant-design-vue'
+import 'ant-design-vue/dist/reset.css'
 import './style.css'
 import App from './App.vue'
 import HomeView from './views/HomeView.vue'
@@ -17,4 +19,4 @@ const router = createRouter({
   ],
 })
 
-createApp(App).use(router).mount('#app')
+createApp(App).use(router).use(Antd).mount('#app')

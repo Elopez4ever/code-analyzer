@@ -1,20 +1,28 @@
 package com.analyzer.infrastructure.persistence.po;
 
 import com.analyzer.infrastructure.persistence.po.enums.ProjectStatus;
+import com.analyzer.infrastructure.persistence.po.enums.UploadMethod;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
+@TableName("project")
 public class ProjectPO {
-    private String id;
-    private String projectId;       // 业务 ID，UUID
-    private String name;            // 项目名（从 git url 或 zip 文件名提取）
-    private String gitUrl;          // git 地址，upload 方式为 null
-    private String localPath;       // clone/解压后的本地路径
+    @TableId("project_id")
+    private String projectId;
+    private String name;
+    private String gitUrl;
+    private String localPath;
     private ProjectStatus status;
-    private Integer chunkCount;     // 解析出的 chunk 总数
-    private String errorMessage;    // 失败时的错误信息
+    private UploadMethod method;
+    private Integer chunkCount;
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updatedAt;
 }

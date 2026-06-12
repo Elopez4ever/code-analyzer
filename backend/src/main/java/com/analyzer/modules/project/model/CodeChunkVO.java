@@ -1,4 +1,4 @@
-package com.analyzer.modules.project.model.vo;
+package com.analyzer.modules.project.model;
 
 public class CodeChunkVO {
 }

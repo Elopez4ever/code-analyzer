@@ -1,117 +1,121 @@
-import { computed, reactive, readonly } from 'vue'
+import { computed, reactive } from 'vue'
+import { projectsApi } from '../api/project'
 
-const STORAGE_KEY = 'code-analyzer-projects'
-const parsingTimers = new Map()
+const STATUS_MAP = {
+  '0': 'PARSING',
+  '1': 'READY',
+  '-1': 'FAILED',
+}
+
+const SOURCE_TYPE_MAP = {
+  0: 'ZIP',
+  1: 'GIT',
+}
 
 const state = reactive({
-  items: loadProjects(),
+  items: [],
+  total: 0,
+  currentPage: 1,
+  pageSize: 10,
+  pages: 0,
+  loading: false,
+  error: null,
 })
 
-function loadProjects() {
+function normalizeProject(raw) {
+  return {
+    id: raw.projectId,
+    name: raw.name,
+    status: STATUS_MAP[String(raw.status)] ?? 'PARSING',
+    sourceType: SOURCE_TYPE_MAP[raw.uploadMethod] ?? 'ZIP',
+    source: raw.gitUrl ?? '暂未配置',
+    updatedAt: raw.updatedAt,
+  }
+}
+
+async function fetchProjects(page = 1) {
+  state.loading = true
+  state.error = null
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    return stored ? JSON.parse(stored) : []
-  } catch {
-    return []
+    const { records, total, current, pages } = await projectsApi.getList(page, state.pageSize)
+    state.items = records.map(normalizeProject)
+    state.total = total
+    state.currentPage = current
+    state.pages = pages
+  } catch (err) {
+    state.error = err.message
+  } finally {
+    state.loading = false
   }
 }
 
-function persist() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.items))
-}
-
-function createId() {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
-}
-
-function deriveNameFromGit(url) {
-  const trimmed = url.trim().replace(/\/+$/, '')
-  const segment = trimmed.split('/').pop() || 'git-project'
-  return segment.replace(/\.git$/i, '') || 'git-project'
-}
-
-function deriveNameFromZip(fileName) {
-  return fileName.replace(/\.zip$/i, '') || 'zip-project'
-}
-
-function updateProject(id, updates) {
-  const index = state.items.findIndex((item) => item.id === id)
-  if (index === -1) return
-  state.items[index] = { ...state.items[index], ...updates, updatedAt: new Date().toISOString() }
-  persist()
-}
-
-function scheduleParsing(id) {
-  if (parsingTimers.has(id)) {
-    clearTimeout(parsingTimers.get(id))
+async function addProjectFromGit(gitUrl, name) {
+  try {
+    const raw = await projectsApi.createFromGit(gitUrl, name)
+    state.items.unshift(normalizeProject(raw))
+    state.total += 1
+  } catch (err) {
+    state.error = err.message
   }
-  const timer = setTimeout(() => {
-    updateProject(id, { status: 'READY' })
-    parsingTimers.delete(id)
-  }, 2400)
-  parsingTimers.set(id, timer)
 }
 
-function addProject(project) {
-  state.items.push(project)
-  persist()
-  scheduleParsing(project.id)
-}
-
-function addProjectFromGit(url, customName) {
-  const name = customName?.trim() || deriveNameFromGit(url)
-  const project = {
-    id: createId(),
-    name,
-    source: url,
-    sourceType: 'Git',
-    status: 'PARSING',
-    updatedAt: new Date().toISOString(),
+async function addProjectFromZip(file, name) {
+  const formData = new FormData()
+  formData.append('file', file)
+  if (name) formData.append('name', name)
+  try {
+    const raw = await projectsApi.createFromZip(formData)
+    state.items.unshift(normalizeProject(raw))
+    state.total += 1
+  } catch (err) {
+    state.error = err.message
   }
-  addProject(project)
 }
 
-function addProjectFromZip(file, customName) {
-  const name = customName?.trim() || deriveNameFromZip(file.name)
-  const project = {
-    id: createId(),
-    name,
-    source: file.name,
-    sourceType: 'ZIP',
-    status: 'PARSING',
-    updatedAt: new Date().toISOString(),
+async function removeProject(id) {
+  try {
+    await projectsApi.remove(id)
+    const idx = state.items.findIndex((p) => p.id === id)
+    if (idx !== -1) {
+      state.items.splice(idx, 1)
+      state.total -= 1
+    }
+  } catch (err) {
+    state.error = err.message
   }
-  addProject(project)
 }
 
-function retryProject(id) {
-  updateProject(id, { status: 'PARSING' })
-  scheduleParsing(id)
-}
-
-function removeProject(id) {
-  const index = state.items.findIndex((item) => item.id === id)
-  if (index === -1) return
-  state.items.splice(index, 1)
-  persist()
+async function retryProject(id) {
+  try {
+    await projectsApi.retry(id)
+    const project = state.items.find((p) => p.id === id)
+    if (project) project.status = 'PARSING'
+  } catch (err) {
+    state.error = err.message
+  }
 }
 
 function getProjectById(id) {
-  return state.items.find((item) => item.id === id)
+  return state.items.find((p) => String(p.id) === String(id))
 }
 
-state.items.filter((item) => item.status === 'PARSING').forEach((item) => scheduleParsing(item.id))
-
 export function useProjects() {
-  const projects = computed(() => state.items)
-  const hasProjects = computed(() => state.items.length > 0)
   return {
-    projects: readonly(projects),
-    hasProjects,
+    projects: computed(() => state.items),
+    sortedProjects: computed(() =>
+      [...state.items].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)),
+    ),
+    hasProjects: computed(() => state.items.length > 0),
+    loading: computed(() => state.loading),
+    error: computed(() => state.error),
+    currentPage: computed(() => state.currentPage),
+    totalPages: computed(() => state.pages),
+    total: computed(() => state.total),
+    fetchProjects,
     addProjectFromGit,
     addProjectFromZip,
-    retryProject,
     removeProject,
+    retryProject,
     getProjectById,
   }
 }

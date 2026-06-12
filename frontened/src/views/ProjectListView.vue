@@ -1,85 +1,132 @@
-<script setup>
-import { computed } from 'vue'
-import { useProjects } from '../store/projects'
-import StatusBadge from '../components/StatusBadge.vue'
-import { formatDateTime } from '../utils/format'
-
-const { projects, removeProject, retryProject, hasProjects } = useProjects()
-
-const sortedProjects = computed(() =>
-  [...projects.value].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)),
-)
-</script>
-
 <template>
-  <div class="page project-list-page">
+  <div class="project-list-page">
     <div class="panel">
       <div class="panel-header">
         <h2 class="panel-title">项目列表</h2>
       </div>
 
-      <div v-if="!hasProjects" class="empty-state">
-        <p class="muted">暂无项目，先在上传页提交 Git URL 或 ZIP 文件。</p>
+      <div v-if="error" class="empty-state">
+        <p class="muted">加载失败：{{ error }}</p>
+        <button class="btn btn-outline btn-sm" style="margin-top:12px" @click="fetchProjects(currentPage)">
+          重试
+        </button>
       </div>
 
-      <div v-else class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>项目名</th>
-              <th>来源</th>
-              <th>类型</th>
-              <th>状态</th>
-              <th>更新时间</th>
-              <th class="col-actions">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="project in sortedProjects" :key="project.id">
-              <td class="col-name">{{ project.name }}</td>
-              <td class="col-source">{{ project.source }}</td>
-              <td>
-                <span class="pill">{{ project.sourceType }}</span>
-              </td>
-              <td>
-                <StatusBadge :status="project.status" />
-              </td>
-              <td class="col-time">{{ formatDateTime(project.updatedAt) }}</td>
-              <td class="col-actions">
-                <RouterLink
-                  v-if="project.status === 'READY'"
-                  class="btn btn-outline btn-accent btn-xs"
-                  :to="`/chat/${project.id}`"
-                >
-                  问答
-                </RouterLink>
-                <span v-else class="btn btn-outline btn-xs disabled">问答</span>
-                <button
-                  v-if="project.status === 'FAILED'"
-                  class="btn btn-outline btn-xs"
-                  @click="retryProject(project.id)"
-                >
-                  重试
-                </button>
-                <button
-                  class="btn btn-outline btn-xs btn-danger"
-                  @click="removeProject(project.id)"
-                >
-                  删除
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <template v-else>
+        <div class="table-wrapper">
+          <a-table
+            :columns="columns"
+            :data-source="sortedProjects"
+            :loading="loading"
+            :pagination="false"
+            row-key="id"
+            class="project-table"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'sourceType'">
+                <span class="pill">{{ record.sourceType }}</span>
+              </template>
+
+              <template v-else-if="column.key === 'status'">
+                <StatusBadge :status="record.status" />
+              </template>
+
+              <template v-else-if="column.key === 'updatedAt'">
+                {{ formatDateTime(record.updatedAt) }}
+              </template>
+
+              <template v-else-if="column.key === 'actions'">
+                <div class="action-row">
+                  <RouterLink :to="`/project/${record.id}`" class="btn btn-outline btn-sm">
+                    详情
+                  </RouterLink>
+                  <button
+                    class="btn btn-outline btn-danger btn-sm"
+                    @click="removeProject(record.id)"
+                  >
+                    删除
+                  </button>
+                  <button
+                    v-if="record.status === 'FAILED'"
+                    class="btn btn-outline btn-sm"
+                    @click="retryProject(record.id)"
+                  >
+                    重试
+                  </button>
+                  <RouterLink
+                    v-else-if="record.status === 'READY'"
+                    class="btn btn-outline btn-accent btn-sm"
+                    :to="`/chat/${record.id}`"
+                  >
+                    问答
+                  </RouterLink>
+                  <span v-else class="btn btn-outline btn-sm btn-disabled">问答</span>
+                </div>
+              </template>
+            </template>
+          </a-table>
+        </div>
+
+        <div class="pagination-wrap">
+          <a-pagination
+            v-model:current="currentPage"
+            :total="total"
+            :page-size="pageSize"
+            show-quick-jumper
+            show-size-changer
+            :show-total="(total) => `共 ${total} 个项目`"
+            @change="fetchProjects"
+            @showSizeChange="onPageSizeChange"
+          />
+        </div>
+      </template>
     </div>
   </div>
 </template>
 
+<script setup>
+import { onMounted, ref } from 'vue'
+import { useProjects } from '../store/projects'
+import StatusBadge from '../components/StatusBadge.vue'
+import { formatDateTime } from '../utils/format'
+
+const {
+  sortedProjects,
+  loading,
+  error,
+  currentPage,
+  totalPages,
+  total,
+  fetchProjects,
+  removeProject,
+  retryProject,
+} = useProjects()
+
+const pageSize = ref(10)
+
+function onPageSizeChange(page, size) {
+  pageSize.value = size
+  fetchProjects(1)
+}
+
+const columns = [
+  { title: '项目名', dataIndex: 'name', key: 'name', width: 160 },
+  { title: '来源', dataIndex: 'source', key: 'source', ellipsis: true, width: 300 },
+  { title: '类型', dataIndex: 'sourceType', key: 'sourceType', width: 80 },
+  { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
+  { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt', width: 160 },
+  { title: '操作', key: 'actions', width: 180 },
+]
+
+onMounted(() => fetchProjects(1))
+</script>
+
 <style scoped>
 .project-list-page {
-  max-width: none;
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 24px;
+  box-sizing: border-box;
 }
 
 .panel {
@@ -92,8 +139,9 @@ const sortedProjects = computed(() =>
 .panel-header {
   display: flex;
   align-items: center;
-  padding: 16px 20px;
+  padding: 16px 24px;
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;              /* 头部不缩放 */
 }
 
 .panel-title {
@@ -102,122 +150,51 @@ const sortedProjects = computed(() =>
   margin: 0;
 }
 
-.table-wrap {
-  overflow-x: auto;
+/* 表格容器：不滚动，自然高度 */
+.table-wrapper {
+  overflow: visible;
 }
 
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
+.project-table :deep(.ant-table) {
+  background: transparent;
+  font-size: 14px;
 }
 
-.data-table thead {
-  background: var(--surface-muted);
-}
-
-.data-table th {
-  text-align: left;
-  padding: 10px 16px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  white-space: nowrap;
+.project-table :deep(.ant-table-thead > tr > th) {
+  background: transparent;
   border-bottom: 1px solid var(--border);
+  color: var(--muted, #888);
+  font-weight: 500;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
-.data-table td {
-  padding: 12px 16px;
+.project-table :deep(.ant-table-tbody > tr > td) {
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 
-.data-table tbody tr:hover {
-  background: var(--surface-muted);
+.project-table :deep(.ant-table-tbody > tr:hover > td) {
+  background: var(--hover, rgba(0, 0, 0, 0.03));
 }
 
-.col-name {
-  font-weight: 600;
-}
-
-.col-source {
-  max-width: 260px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--muted);
-}
-
-.col-time {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.col-actions {
-  text-align: right;
-  white-space: nowrap;
-}
-
-td.col-actions {
+/* 操作按钮：单行排列 */
+.action-row {
   display: flex;
   gap: 6px;
-  justify-content: flex-end;
   align-items: center;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
-.btn-xs {
-  padding: 4px 10px;
-  font-size: 12px;
-  border-radius: 6px;
-}
-
-.btn-outline {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text);
-}
-
-.btn-outline:hover {
-  background: var(--surface-muted);
-}
-
-.btn-accent {
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.btn-accent:hover {
-  background: rgba(91, 108, 255, 0.08);
-}
-
-.btn-danger {
-  border-color: rgba(239, 68, 68, 0.5);
-  color: var(--danger);
-}
-
-.btn-danger:hover {
-  background: rgba(239, 68, 68, 0.08);
-}
-
-.empty-state {
-  padding: 64px 32px;
-  text-align: center;
-}
-
-.pill {
-  padding: 3px 10px;
-  font-size: 11px;
-}
-
-@media (max-width: 768px) {
-  .project-list-page {
-    padding: 16px;
-  }
-
-  .data-table th,
-  .data-table td {
-    padding: 10px 12px;
-  }
+/* 分页固定底部 */
+.pagination-wrap {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 24px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--surface);
 }
 </style>

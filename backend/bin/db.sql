@@ -10,12 +10,11 @@ CREATE EXTENSION IF NOT EXISTS vector;
 -- 项目表
 -- ============================================
 CREATE TABLE IF NOT EXISTS project (
-                                       id            SERIAL PRIMARY KEY,
-                                       project_id    TEXT NOT NULL UNIQUE,
+                                       project_id    TEXT PRIMARY KEY,
                                        name          TEXT NOT NULL,
                                        git_url       TEXT,
                                        local_path    TEXT,
-                                       status        TEXT NOT NULL DEFAULT 'PENDING',
+                                       status        TEXT NOT NULL DEFAULT 'FAILED',
                                        chunk_count   INT DEFAULT 0,
                                        error_message TEXT,
                                        created_at    TIMESTAMP DEFAULT NOW(),

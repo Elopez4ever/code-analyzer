@@ -2,14 +2,20 @@ package com.analyzer.modules.project.service;
 
 import com.analyzer.common.config.AppConfigProperties;
 import com.analyzer.common.exception.BusinessException;
+import com.analyzer.common.exception.ErrorCode;
 import com.analyzer.infrastructure.persistence.service.ProjectPersistenceService;
 import com.analyzer.infrastructure.persistence.po.ProjectPO;
 import com.analyzer.infrastructure.persistence.po.enums.ProjectStatus;
 import com.analyzer.infrastructure.file.FileValidationService;
 import com.analyzer.modules.parser.service.ProjectParsingService;
+import com.analyzer.modules.project.model.ProjectPageDTO;
+import com.analyzer.modules.project.model.ProjectVO;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -19,6 +25,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -35,7 +42,12 @@ public class ProjectService {
 
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
 
-    public ProjectPO saveFromZip(MultipartFile file, String projectName) {
+    /**
+     * 通过 zip 上传项目
+     * @param file zip文件
+     * @param projectName 项目名
+     */
+    public void saveFromZip(MultipartFile file, String projectName) {
         // 校验文件大小
         fileValidationService.validateFile(file, MAX_FILE_SIZE);
 
@@ -50,7 +62,7 @@ public class ProjectService {
         // 检查项目是否存在
         Optional<ProjectPO> existingProject = projectPersistenceService.findExistingResume(projectName);
         if (existingProject.isPresent()) {
-            return existingProject.get();
+            throw new BusinessException(ErrorCode.DUPLICATE_PROJECT);
         }
         String projectId = UUID.randomUUID().toString().replace("-", "");
         String localPath = appConfig.getUploadPath() + "/" + projectId;
@@ -68,10 +80,14 @@ public class ProjectService {
 
         // 异步解析项目
         parsingService.parseAsync(projectId, localPath);
-
-        return projectPO;
     }
 
+    /**
+     * 通过 git 链接上传
+     * @param gitUrl git 链接
+     * @param projectName 项目名
+     * @return project
+     */
     public ProjectPO saveFromGit(String gitUrl, String projectName) {
         // 校验 URL 格式
         gitService.validateGitUrl(gitUrl);
@@ -97,6 +113,26 @@ public class ProjectService {
         // 异步解析
         parsingService.parseAsync(projectId, localPath);
         return projectPO;
+    }
+
+    /**
+     * 分页查询项目列表
+     * @param pageDTO 分页 dto
+     * @return 查询结果
+     */
+    public Page<ProjectVO> listPage(ProjectPageDTO pageDTO) {
+        Page<ProjectPO> result = projectPersistenceService.listPage(pageDTO.getPage(), pageDTO.getSize());
+        Page<ProjectVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
+        voPage.setRecords(result.getRecords().stream()
+                .map(po -> {
+                    ProjectVO vo = new ProjectVO();
+                    BeanUtils.copyProperties(po, vo);
+                    vo.setStatus(po.getStatus().getValue());
+                    vo.setUploadMethod(po.getMethod().getValue());
+                    return vo;
+                })
+                .collect(Collectors.toList()));
+        return voPage;
     }
 
     /**

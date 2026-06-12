@@ -2,6 +2,7 @@ package com.analyzer.common.result;
 
 import com.analyzer.common.constant.CommonConstants;
 import com.analyzer.common.exception.ErrorCode;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 
 
@@ -10,6 +11,7 @@ public class Result<T> {
 
     private final Integer code;
     private final String message;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private final T data;
 
     private Result(Integer code, String message, T data) {
@@ -52,7 +54,7 @@ public class Result<T> {
 
     // ========== 辅助方法 ==========
 
-    public boolean isSuccess() {
+    public boolean checkSuccess() {
         return CommonConstants.StatusCode.SUCCESS == this.code;
     }
 }

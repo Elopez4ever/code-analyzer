@@ -7,13 +7,16 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum ErrorCode {
 
-    // ========== 通用错误 1xxx ==========
+    // ========== 通用错误 ==========
     SUCCESS(200, "成功"),
     BAD_REQUEST(400, "请求参数错误"),
     UNAUTHORIZED(401, "未授权"),
     FORBIDDEN(403, "禁止访问"),
     NOT_FOUND(404, "资源不存在"),
-    INTERNAL_ERROR(500, "服务器内部错误");
+    INTERNAL_ERROR(500, "服务器内部错误"),
+
+    // ========== Project Module 错误 ==========
+    DUPLICATE_PROJECT(405, "项目已存在");
 
     private final Integer code;
     private final String message;
