@@ -158,25 +158,45 @@ onMounted(() => fetchProjects(1))
 .project-table :deep(.ant-table) {
   background: transparent;
   font-size: 14px;
+  color: var(--text);
 }
 
 .project-table :deep(.ant-table-thead > tr > th) {
-  background: transparent;
+  background: var(--surface-muted);
   border-bottom: 1px solid var(--border);
-  color: var(--muted, #888);
-  font-weight: 500;
-  position: sticky;
-  top: 0;
-  z-index: 1;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .project-table :deep(.ant-table-tbody > tr > td) {
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
+  color: var(--text);
+  font-weight: 500;
 }
 
 .project-table :deep(.ant-table-tbody > tr:hover > td) {
-  background: var(--hover, rgba(0, 0, 0, 0.03));
+  background: var(--surface-muted);
+}
+
+/* 空状态/错误提示 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  color: var(--text);
+}
+
+.empty-state .muted {
+  font-size: 14px;
+  color: var(--text);
+  opacity: 0.85;
+  margin: 0;
 }
 
 /* 操作按钮：单行排列 */
