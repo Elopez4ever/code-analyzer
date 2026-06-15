@@ -1,4 +1,4 @@
-package com.analyzer.common.exception;
+package com.analyzer.common.result.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,7 +22,8 @@ public enum ErrorCode {
     ZIP_TOO_MANY_ENTRIES(408, "文件条目数过多"),
     ZIP_ILLEGAL_ENTRY(409, "非法的条目名"),
     ZIP_UNCOMPRESSED_TOO_LARGE(410, "上传文件过大"),
-    ZIP_EXTRACT_FAILED(411, "文件解压失败")
+    ZIP_EXTRACT_FAILED(411, "文件解压失败"),
+    PROJECT_NOT_FOUND(412, "项目不存在"),
     ;
 
     private final Integer code;

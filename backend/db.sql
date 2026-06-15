@@ -21,7 +21,10 @@ CREATE TABLE IF NOT EXISTS project (
                                        updated_at    TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_project_project_id ON project (project_id);
+-- 项目名全局唯一
+CREATE UNIQUE INDEX IF NOT EXISTS uk_project_name ON project (name);
+-- Git 仓库地址唯一
+CREATE UNIQUE INDEX IF NOT EXISTS uk_project_git_url ON project (git_url);
 
 -- ============================================
 -- 代码块表

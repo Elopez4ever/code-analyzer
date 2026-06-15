@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -21,30 +22,67 @@ public class ProjectPersistenceService {
     private final ProjectMapper projectMapper;
 
     /**
-     * 检查简历是否已存在（基于项目名称）
-     * @param projectName 项目名
-     * @return 如果存在返回已有的简历实体，否则返回空
+     * 根据ID查询项目
+     * @param id 项目ID
+     * @return 项目信息
      */
-    public Optional<ProjectPO> findExistingResume(String projectName) {
-        ProjectPO result = projectMapper.selectOne(
+    public Optional<ProjectPO> findById(String id) {
+        return Optional.ofNullable(projectMapper.selectOne(
                 new LambdaQueryWrapper<ProjectPO>()
-                        .eq(ProjectPO::getName, projectName)
+                        .eq(ProjectPO::getProjectId, id)
                         .last("LIMIT 1")
-        );
-        return Optional.ofNullable(result);
+        ));
+    }
+
+    /**
+     * 根据名称查询项目
+     * @param name 项目名称
+     * @return 项目信息
+     */
+    public Optional<ProjectPO> findByName(String name) {
+        return Optional.ofNullable(projectMapper.selectOne(
+                new LambdaQueryWrapper<ProjectPO>()
+                        .eq(ProjectPO::getName, name)
+                        .last("LIMIT 1")
+        ));
+    }
+
+    /**
+     * 根据Git地址查询项目
+     * @param gitUrl Git仓库地址
+     * @return 项目信息
+     */
+    public Optional<ProjectPO> findByGitUrl(String gitUrl) {
+        return Optional.ofNullable(projectMapper.selectOne(
+                new LambdaQueryWrapper<ProjectPO>()
+                        .eq(ProjectPO::getGitUrl, gitUrl)
+                        .last("LIMIT 1")
+        ));
     }
 
     /**
      * 保存项目
-     * @param projectPO 项目po
+     * @param projectPO 项目PO
      */
     public void save(ProjectPO projectPO) {
         projectMapper.insert(projectPO);
     }
 
     /**
+     * 更新项目信息
+     * @param projectPO 项目PO
+     */
+    public void update(ProjectPO projectPO) {
+        projectMapper.update(
+                projectPO,
+                new LambdaUpdateWrapper<ProjectPO>()
+                        .eq(ProjectPO::getProjectId, projectPO.getProjectId())
+        );
+    }
+
+    /**
      * 更新项目状态
-     * @param projectId 项目id
+     * @param projectId 项目ID
      * @param status 新状态
      */
     public void updateStatus(String projectId, ProjectStatus status) {
@@ -58,15 +96,41 @@ public class ProjectPersistenceService {
 
     /**
      * 分页查询项目
-     * @param pageNum 页数
+     * @param pageNum 页码
      * @param pageSize 页大小
-     * @return 查询结果
+     * @return 分页结果
      */
     public Page<ProjectPO> listPage(int pageNum, int pageSize) {
         return projectMapper.selectPage(
                 new Page<>(pageNum, pageSize),
                 new LambdaQueryWrapper<ProjectPO>()
                         .orderByDesc(ProjectPO::getCreatedAt)
+        );
+    }
+
+    /**
+     * 根据ID删除项目
+     * @param projectId 项目ID
+     */
+    public void deleteById(String projectId) {
+        projectMapper.delete(
+                new LambdaQueryWrapper<ProjectPO>()
+                        .eq(ProjectPO::getProjectId, projectId)
+        );
+    }
+
+    /**
+     * 根据ID批量查询项目
+     * @param projectIds 项目ID列表
+     * @return 项目列表
+     */
+    public List<ProjectPO> findAllByIds(List<String> projectIds) {
+        if (projectIds == null || projectIds.isEmpty()) {
+            return List.of();
+        }
+        return projectMapper.selectList(
+                new LambdaQueryWrapper<ProjectPO>()
+                        .in(ProjectPO::getProjectId, projectIds)
         );
     }
 }

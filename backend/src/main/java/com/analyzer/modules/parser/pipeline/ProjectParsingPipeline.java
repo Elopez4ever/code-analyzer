@@ -1,6 +1,6 @@
 package com.analyzer.modules.parser.pipeline;
 
-import com.analyzer.common.exception.BusinessException;
+import com.analyzer.common.result.exception.BusinessException;
 import com.analyzer.infrastructure.ai.embedding.EmbeddingService;
 import com.analyzer.infrastructure.vectorstore.VectorStoreService;
 import com.analyzer.infrastructure.vectorstore.entity.CodeChunkVector;

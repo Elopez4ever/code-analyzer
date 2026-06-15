@@ -1223,3 +1223,107 @@ img {
     flex-wrap: wrap;
   }
 }
+
+/* ========================================================
+   Global Toast Notifications (teleported to body)
+   ======================================================== */
+
+.toast-container {
+  position: fixed;
+  top: 80px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  pointer-events: auto;
+  max-width: 420px;
+  min-width: 260px;
+}
+
+.toast-item.toast-success {
+  background: var(--success-muted, #f0fdf4);
+  color: var(--success, #166534);
+  border: 1px solid var(--success-light, #bbf7d0);
+}
+
+.toast-item.toast-error {
+  background: var(--error-muted, #fef2f2);
+  color: var(--error, #dc2626);
+  border: 1px solid var(--error-light, #fecaca);
+}
+
+[data-theme='dark'] .toast-item.toast-success {
+  background: rgba(16, 185, 129, 0.12);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+[data-theme='dark'] .toast-item.toast-error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.toast-item svg {
+  flex-shrink: 0;
+}
+
+.toast-text {
+  flex: 1;
+  word-break: break-word;
+}
+
+.toast-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.toast-close:hover {
+  opacity: 1;
+}
+
+/* TransitionGroup animations */
+.toast-item-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.toast-item-leave-active {
+  transition: all 0.25s ease-in;
+}
+
+.toast-item-enter-from {
+  opacity: 0;
+  transform: translateX(40px);
+}
+
+.toast-item-leave-to {
+  opacity: 0;
+  transform: translateX(40px);
+}
+
+/* Slide down when entering for a stacked effect */
+.toast-item-move {
+  transition: transform 0.3s ease;
+}

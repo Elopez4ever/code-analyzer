@@ -1,4 +1,4 @@
-package com.analyzer.common.exception;
+package com.analyzer.common.result.exception;
 
 import com.analyzer.common.result.Result;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +21,7 @@ public class GlobalExceptionHandler {
      * @param e 业务异常
      * @return 返回对象
      */
+    @ExceptionHandler(BusinessException.class)
     public Result<?> handelBusinessException(BusinessException e) {
         return Result.error(e.getCode(), e.getMessage());
     }

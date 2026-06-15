@@ -26,6 +26,7 @@
         <hutool.version>5.8.28</hutool.version>
         <pgvector.version>0.1.6</pgvector.version>
         <tika.version>1.28.5</tika.version>
+        <common-io.version>2.15.1</common-io.version>
     </properties>
 
     <dependencyManagement>
@@ -101,6 +102,12 @@
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
             <version>${tika.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${common-io.version}</version>
         </dependency>
 
         <!-- 开发辅助 -->

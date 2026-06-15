@@ -1,3 +1,4 @@
+// src/store/projects.js (or .ts)
 import { computed, reactive } from 'vue'
 import { projectsApi } from '../api/project'
 
@@ -54,8 +55,10 @@ async function addProjectFromGit(gitUrl, name) {
     const raw = await projectsApi.createFromGit(gitUrl, name)
     state.items.unshift(normalizeProject(raw))
     state.total += 1
+    return { success: true }
   } catch (err) {
     state.error = err.message
+    return { success: false, message: err.message }
   }
 }
 
@@ -67,8 +70,10 @@ async function addProjectFromZip(file, name) {
     const raw = await projectsApi.createFromZip(formData)
     state.items.unshift(normalizeProject(raw))
     state.total += 1
+    return { success: true }
   } catch (err) {
     state.error = err.message
+    return { success: false, message: err.message }
   }
 }
 
@@ -95,6 +100,19 @@ async function retryProject(id) {
   }
 }
 
+async function updateProject(id, payload) {
+  try {
+    const raw = await projectsApi.update(id, payload)
+    const idx = state.items.findIndex((p) => p.id === id)
+    if (idx !== -1) {
+      state.items[idx] = normalizeProject(raw)
+    }
+  } catch (err) {
+    state.error = err.message
+    throw err
+  }
+}
+
 function getProjectById(id) {
   return state.items.find((p) => String(p.id) === String(id))
 }
@@ -116,6 +134,7 @@ export function useProjects() {
     addProjectFromZip,
     removeProject,
     retryProject,
+    updateProject,
     getProjectById,
   }
 }

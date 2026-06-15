@@ -1,7 +1,7 @@
 package com.analyzer.common.result;
 
 import com.analyzer.common.constant.CommonConstants;
-import com.analyzer.common.exception.ErrorCode;
+import com.analyzer.common.result.exception.ErrorCode;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 

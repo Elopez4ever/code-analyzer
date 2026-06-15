@@ -15,6 +15,7 @@ spring:
 app:
   project:
     upload-path: <YOUR_PROJECT_UPLOAD_PATH>
+    max-file-size: 1000
 
 analyzer:
   ai:

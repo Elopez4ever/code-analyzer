@@ -1,7 +1,7 @@
 package com.analyzer.infrastructure.file;
 
-import com.analyzer.common.exception.BusinessException;
-import com.analyzer.common.exception.ErrorCode;
+import com.analyzer.common.result.exception.BusinessException;
+import com.analyzer.common.result.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
 import org.springframework.stereotype.Service;

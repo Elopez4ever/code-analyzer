@@ -1,4 +1,4 @@
-package com.analyzer.common.exception;
+package com.analyzer.common.result.exception;
 
 import lombok.Getter;
 

@@ -13,4 +13,5 @@ import java.util.List;
 @ConfigurationProperties(prefix = "app.project")
 public class AppConfigProperties {
     private String uploadPath;
+    private long maxFileSize;
 }

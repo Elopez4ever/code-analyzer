@@ -1,6 +1,6 @@
 package com.analyzer.modules.parser.pipeline.parser;
 
-import com.analyzer.common.exception.BusinessException;
+import com.analyzer.common.result.exception.BusinessException;
 import com.analyzer.modules.parser.pipeline.ProjectParser;
 import com.analyzer.modules.parser.pipeline.parser.detector.FileLanguageDetector;
 import com.analyzer.modules.parser.pipeline.domain.FileLanguage;

@@ -1,3 +1,5 @@
+import { showErrorToast } from '../utils/toast'
+
 const BASE = '/api'
 
 async function request(path, options = {}) {
@@ -5,11 +7,17 @@ async function request(path, options = {}) {
     headers: { 'Content-Type': 'application/json', ...options.headers },
     ...options,
   })
-  const data = await res.json()
-  if (!res.ok || data.code !== 200) {
-    throw new Error(data.message || `请求失败 (${res.status})`)
+  const json = await res.json()
+
+  // Trigger toast based on response code
+  if (json.code !== 200) {
+    showErrorToast(json.message || `请求失败 (${res.status})`)
   }
-  return data.data
+
+  if (!res.ok || json.code !== 200) {
+    throw new Error(json.message || `请求失败 (${res.status})`)
+  }
+  return json.data ?? null
 }
 
 export const projectsApi = {
@@ -17,7 +25,7 @@ export const projectsApi = {
     request(`/project/?page=${page}&size=${size}`),
 
   createFromGit: (gitUrl, name) =>
-    request('/project/', {
+    request('/project/create', {
       method: 'POST',
       body: JSON.stringify({ gitUrl, name, uploadMethod: 1 }),
     }),
@@ -26,6 +34,12 @@ export const projectsApi = {
     fetch(`${BASE}/project/upload`, { method: 'POST', body: formData })
       .then(async (res) => {
         const data = await res.json()
+
+        // Trigger toast based on response code
+        if (data.code !== 200) {
+          showErrorToast(data.message || `上传失败 (${res.status})`)
+        }
+
         if (!res.ok || data.code !== 200) throw new Error(data.message || `上传失败 (${res.status})`)
         return data.data
       }),
@@ -35,4 +49,10 @@ export const projectsApi = {
 
   retry: (id) =>
     request(`/project/${id}/retry`, { method: 'POST' }),
+
+  update: (id, payload) =>
+    request(`/project/modify`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 }

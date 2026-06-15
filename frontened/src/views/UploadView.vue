@@ -1,68 +1,21 @@
-<script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useProjects } from '../store/projects'
-
-const projectName = ref('')
-const gitUrl = ref('')
-const zipInput = ref(null)
-const zipFile = ref(null)
-const isDragging = ref(false)
-const router = useRouter()
-const { addProjectFromGit, addProjectFromZip } = useProjects()
-
-const goToProjects = () => {
-  router.push('/projects')
-}
-
-const handleGitSubmit = () => {
-  const trimmed = gitUrl.value.trim()
-  if (!trimmed) return
-  addProjectFromGit(trimmed, projectName.value)
-  gitUrl.value = ''
-  projectName.value = ''
-  goToProjects()
-}
-
-const handleZipSelect = (event) => {
-  const file = event.target.files?.[0]
-  if (!file) return
-  zipFile.value = file
-  if (!projectName.value && file.name) {
-    projectName.value = file.name.replace(/\.zip$/i, '')
-  }
-}
-
-const handleZipUpload = () => {
-  if (!zipFile.value) return
-  addProjectFromZip(zipFile.value, projectName.value)
-  zipFile.value = null
-  projectName.value = ''
-  if (zipInput.value) {
-    zipInput.value.value = ''
-  }
-  goToProjects()
-}
-
-const handleDrop = (event) => {
-  const file = event.dataTransfer?.files?.[0]
-  isDragging.value = false
-  if (!file) return
-  if (!file.name.toLowerCase().endsWith('.zip')) return
-  zipFile.value = file
-  if (!projectName.value && file.name) {
-    projectName.value = file.name.replace(/\.zip$/i, '')
-  }
-}
-</script>
-
-<template>
+﻿<template>
   <div class="page upload-page">
+    <!-- Loading overlay -->
+    <Transition name="fade">
+      <div v-if="submitting" class="loading-overlay">
+        <div class="loading-card">
+          <div class="spinner"></div>
+          <p class="loading-text">正在上传项目，请稍候…</p>
+        </div>
+      </div>
+    </Transition>
+
     <div class="upload-container">
       <div class="upload-header">
         <h1 class="upload-title">上传项目</h1>
         <p class="upload-subtitle">上传成功后自动进入项目列表</p>
       </div>
+
 
       <div class="name-bar">
         <label class="form-label">项目名称</label>
@@ -71,6 +24,7 @@ const handleDrop = (event) => {
           type="text"
           class="input"
           placeholder="输入项目名称（可选，留空自动使用仓库名或文件名）"
+          :disabled="submitting"
         />
       </div>
 
@@ -89,8 +43,13 @@ const handleDrop = (event) => {
               type="url"
               class="input"
               placeholder="https://github.com/org/repo.git"
+              :disabled="submitting"
             />
-            <button class="btn btn-primary btn-full" :disabled="!gitUrl.trim()" @click="handleGitSubmit">
+            <button
+              class="btn btn-primary btn-full"
+              :disabled="!gitUrl.trim() || submitting"
+              @click="handleGitSubmit"
+            >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
               </svg>
@@ -121,7 +80,7 @@ const handleDrop = (event) => {
           <p class="panel-desc">拖拽或选择 ZIP 文件，完成后自动解析项目</p>
           <div
             class="dropzone"
-            :class="{ dragging: isDragging }"
+            :class="{ dragging: isDragging, disabled: submitting }"
             @dragover.prevent="isDragging = true"
             @dragleave.prevent="isDragging = false"
             @drop.prevent="handleDrop"
@@ -133,7 +92,7 @@ const handleDrop = (event) => {
             </div>
             <div class="dropzone-title">拖拽 ZIP 文件到这里</div>
             <div class="dropzone-subtitle">或点击按钮选择文件</div>
-            <input ref="zipInput" type="file" accept=".zip" class="file-input" @change="handleZipSelect" />
+            <input ref="zipInput" type="file" accept=".zip" class="file-input" :disabled="submitting" @change="handleZipSelect" />
           </div>
           <div v-if="zipFile" class="file-row">
             <div class="file-info">
@@ -143,7 +102,7 @@ const handleDrop = (event) => {
               </svg>
               <span class="file-name">{{ zipFile.name }}</span>
             </div>
-            <button class="btn btn-primary btn-full" @click="handleZipUpload">
+            <button class="btn btn-primary btn-full" :disabled="submitting" @click="handleZipUpload">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
               </svg>
@@ -172,6 +131,76 @@ const handleDrop = (event) => {
   </div>
 </template>
 
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useProjects } from '../store/projects'
+import { showSuccessToast } from '../utils/toast'
+
+const projectName = ref('')
+const gitUrl = ref('')
+const zipInput = ref(null)
+const zipFile = ref(null)
+const isDragging = ref(false)
+const submitting = ref(false)
+const router = useRouter()
+const { addProjectFromGit, addProjectFromZip } = useProjects()
+
+
+const goToProjects = () => {
+  showSuccessToast('添加成功')
+  router.push({ path: '/projects' })
+}
+
+const handleGitSubmit = async () => {
+  const trimmed = gitUrl.value.trim()
+  if (!trimmed || submitting.value) return
+  submitting.value = true
+  const result = await addProjectFromGit(trimmed, projectName.value)
+  submitting.value = false
+  if (result.success) {
+    gitUrl.value = ''
+    projectName.value = ''
+    goToProjects()
+  }
+}
+
+const handleZipSelect = (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+  zipFile.value = file
+  if (!projectName.value && file.name) {
+    projectName.value = file.name.replace(/\.zip$/i, '')
+  }
+}
+
+const handleZipUpload = async () => {
+  if (!zipFile.value || submitting.value) return
+  submitting.value = true
+  const result = await addProjectFromZip(zipFile.value, projectName.value)
+  submitting.value = false
+  if (result.success) {
+    zipFile.value = null
+    projectName.value = ''
+    if (zipInput.value) {
+      zipInput.value.value = ''
+    }
+    goToProjects()
+  }
+}
+
+const handleDrop = (event) => {
+  const file = event.dataTransfer?.files?.[0]
+  isDragging.value = false
+  if (!file) return
+  if (!file.name.toLowerCase().endsWith('.zip')) return
+  zipFile.value = file
+  if (!projectName.value && file.name) {
+    projectName.value = file.name.replace(/\.zip$/i, '')
+  }
+}
+</script>
+
 <style scoped>
 .upload-page {
   min-height: 100vh;
@@ -180,6 +209,61 @@ const handleDrop = (event) => {
   justify-content: center;
   padding: 24px;
   background: transparent;
+  position: relative;
+}
+
+/* Loading overlay */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+.loading-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* Fade transition for loading overlay */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
 .upload-container {
@@ -264,12 +348,7 @@ const handleDrop = (event) => {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  /* 统一左右面板背景色 */
   background: var(--surface);
-}
-
-.panel-left {
-  /* 不再使用 var(--surface-muted)，保持与右侧一致 */
 }
 
 .divider-vertical {
@@ -358,6 +437,11 @@ const handleDrop = (event) => {
   font-size: 13px;
 }
 
+.input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -421,6 +505,11 @@ const handleDrop = (event) => {
   transform: scale(1.01);
 }
 
+.dropzone.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 .dropzone-icon {
   color: var(--muted);
   margin-bottom: 8px;
@@ -448,6 +537,10 @@ const handleDrop = (event) => {
   inset: 0;
   opacity: 0;
   cursor: pointer;
+}
+
+.file-input:disabled {
+  cursor: not-allowed;
 }
 
 .file-row {
@@ -543,4 +636,5 @@ const handleDrop = (event) => {
     font-size: 22px;
   }
 }
+
 </style>
