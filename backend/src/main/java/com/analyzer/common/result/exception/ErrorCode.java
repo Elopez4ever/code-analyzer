@@ -16,7 +16,14 @@ public enum ErrorCode {
     INTERNAL_ERROR(500, "服务器内部错误"),
 
     // ========== Project Module 错误 ==========
-    DUPLICATE_PROJECT(405, "项目已存在");
+    DUPLICATE_PROJECT(405, "项目已存在"),
+    CLONE_ERROR(406, "克隆项目时出现错误"),
+    INVALID_FILE_TYPE(407, "上传的文件类型不支持"),
+    ZIP_TOO_MANY_ENTRIES(408, "文件条目数过多"),
+    ZIP_ILLEGAL_ENTRY(409, "非法的条目名"),
+    ZIP_UNCOMPRESSED_TOO_LARGE(410, "上传文件过大"),
+    ZIP_EXTRACT_FAILED(411, "文件解压失败")
+    ;
 
     private final Integer code;
     private final String message;
