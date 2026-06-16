@@ -9,7 +9,6 @@ import lombok.Data;
 public class ProjectCreateDTO {
 
     @Schema(description = "项目名称")
-    @NotBlank(message = "项目名称不能为空")
     private String name;
 
     @Schema(description = "git链接")

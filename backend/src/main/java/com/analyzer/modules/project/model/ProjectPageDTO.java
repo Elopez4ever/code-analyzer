@@ -17,4 +17,7 @@ public class ProjectPageDTO {
     @Min(value = 1, message = "每页条数最小为1")
     @Max(value = 100, message = "每页条数最大为100")
     private Integer size = 10;
+
+    @Schema(description = "项目名, 可选")
+    private String projectName;
 }

@@ -3,13 +3,22 @@
     <div class="panel">
       <div class="panel-header">
         <h2 class="panel-title">项目列表</h2>
-        <button
-          v-if="selectedIds.length > 0"
-          class="btn btn-danger batch-delete-btn"
-          @click="handleBatchDelete"
-        >
-          批量删除 ({{ selectedIds.length }})
-        </button>
+        <div class="panel-header-right">
+          <a-input-search
+            v-model:value="searchText"
+            placeholder="搜索项目名称"
+            allow-clear
+            class="search-input"
+            @search="setProjectName"
+          />
+          <button
+            v-if="selectedIds.length > 0"
+            class="btn btn-danger batch-delete-btn"
+            @click="handleBatchDelete"
+          >
+            批量删除 ({{ selectedIds.length }})
+          </button>
+        </div>
       </div>
 
       <div v-if="error" class="empty-state">
@@ -21,8 +30,8 @@
 
       <template v-else>
         <div class="table-wrapper">
-          <transition name="page-fade">
-            <div :key="currentPage" class="table-transition-inner">
+          <transition name="page-fade" mode="out-in">
+            <div :key="fetchCounter" class="table-transition-inner">
               <a-table
                 :columns="columns"
                 :data-source="sortedProjects"
@@ -123,10 +132,11 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useProjects } from '../store/projects'
 import StatusBadge from '../components/StatusBadge.vue'
 import { formatDateTime } from '../utils/format'
+import { showSuccessToast } from '../utils/toast'
 
 const {
   sortedProjects,
@@ -135,13 +145,23 @@ const {
   currentPage,
   totalPages,
   total,
+  projectName,
+  fetchCounter,
   fetchProjects,
+  setProjectName,
   removeProject,
+  batchRemoveProject,
   retryProject,
   updateProject,
 } = useProjects()
 
+const searchText = ref(projectName.value)
 const selectedIds = ref([])
+
+watch(searchText, (val) => {
+  if (val === projectName.value) return
+  setProjectName(val)
+})
 
 const rowSelection = computed(() => ({
   selectedRowKeys: selectedIds.value,
@@ -152,10 +172,18 @@ const rowSelection = computed(() => ({
 
 async function handleBatchDelete() {
   const ids = [...selectedIds.value]
-  for (const id of ids) {
-    await removeProject(id)
+  try {
+    await batchRemoveProject(ids)
+    selectedIds.value = []
+    showSuccessToast(`已删除 ${ids.length} 个项目`)
+    await fetchProjects(currentPage.value)
+    // 当前页为空但仍有数据时，回到第一页
+    if (sortedProjects.value.length === 0 && total.value > 0) {
+      fetchProjects(1)
+    }
+  } catch {
+    // error handled in store
   }
-  selectedIds.value = []
 }
 
 const columns = [
@@ -238,6 +266,17 @@ onMounted(() => fetchProjects(1))
   font-weight: 700;
   margin: 0;
   flex-shrink: 0;
+}
+
+.panel-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.search-input {
+  width: 220px;
 }
 
 .batch-delete-btn {

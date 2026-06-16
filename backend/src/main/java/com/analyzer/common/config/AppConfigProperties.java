@@ -14,4 +14,5 @@ import java.util.List;
 public class AppConfigProperties {
     private String uploadPath;
     private long maxFileSize;
+    private String topic;
 }

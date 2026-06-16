@@ -3,12 +3,14 @@ package com.analyzer.infrastructure.persistence.service;
 import com.analyzer.infrastructure.persistence.mapper.ProjectMapper;
 import com.analyzer.infrastructure.persistence.po.enums.ProjectStatus;
 import com.analyzer.infrastructure.persistence.po.ProjectPO;
+import com.analyzer.modules.project.service.ProjectService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,6 +32,7 @@ public class ProjectPersistenceService {
         return Optional.ofNullable(projectMapper.selectOne(
                 new LambdaQueryWrapper<ProjectPO>()
                         .eq(ProjectPO::getProjectId, id)
+                        .ne(ProjectPO::getStatus, ProjectStatus.DELETED)
                         .last("LIMIT 1")
         ));
     }
@@ -98,12 +101,14 @@ public class ProjectPersistenceService {
      * 分页查询项目
      * @param pageNum 页码
      * @param pageSize 页大小
+     * @param projectName 项目名
      * @return 分页结果
      */
-    public Page<ProjectPO> listPage(int pageNum, int pageSize) {
+    public Page<ProjectPO> listPage(int pageNum, int pageSize, String projectName) {
         return projectMapper.selectPage(
                 new Page<>(pageNum, pageSize),
                 new LambdaQueryWrapper<ProjectPO>()
+                        .like(StringUtils.hasText(projectName), ProjectPO::getName, projectName)
                         .orderByDesc(ProjectPO::getCreatedAt)
         );
     }
@@ -131,6 +136,38 @@ public class ProjectPersistenceService {
         return projectMapper.selectList(
                 new LambdaQueryWrapper<ProjectPO>()
                         .in(ProjectPO::getProjectId, projectIds)
+        );
+    }
+
+    /**
+     * 批量更新项目状态
+     * @param projectIds 项目 ID
+     * @param projectStatus 项目状态
+     */
+    public void batchUpdateStatus(List<String> projectIds, ProjectStatus projectStatus) {
+        if (projectIds == null || projectIds.isEmpty()) {
+            return;
+        }
+        ProjectPO update = new ProjectPO();
+        update.setStatus(projectStatus);
+        projectMapper.update(update,
+                new LambdaUpdateWrapper<ProjectPO>()
+                        .in(ProjectPO::getProjectId, projectIds)
+        );
+    }
+
+    /**
+     * 通过项目状态寻找项目
+     */
+    public List<ProjectPO> findByStatus(ProjectStatus status) {
+        if (projectIds == null || projectIds.isEmpty()) {
+            return;
+        }
+        return projectMapper.selectPage(
+                new Page<>(pageNum, pageSize),
+                new LambdaQueryWrapper<ProjectPO>()
+                        .like(StringUtils.hasText(projectName), ProjectPO::getName, projectName)
+                        .orderByDesc(ProjectPO::getCreatedAt)
         );
     }
 }

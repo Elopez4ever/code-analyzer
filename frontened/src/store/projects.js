@@ -13,6 +13,8 @@ const SOURCE_TYPE_MAP = {
   1: 'GIT',
 }
 
+let searchTimer = null
+
 const state = reactive({
   items: [],
   total: 0,
@@ -21,6 +23,8 @@ const state = reactive({
   pages: 0,
   loading: false,
   error: null,
+  projectName: '',
+  fetchCounter: 0,
 })
 
 function normalizeProject(raw) {
@@ -35,10 +39,15 @@ function normalizeProject(raw) {
 }
 
 async function fetchProjects(page = 1) {
+  state.fetchCounter += 1
   state.loading = true
   state.error = null
   try {
-    const { records, total, current, pages } = await projectsApi.getList(page, state.pageSize)
+    const { records, total, current, pages } = await projectsApi.getList(
+      page,
+      state.pageSize,
+      state.projectName || undefined,
+    )
     state.items = records.map(normalizeProject)
     state.total = total
     state.currentPage = current
@@ -47,6 +56,18 @@ async function fetchProjects(page = 1) {
     state.error = err.message
   } finally {
     state.loading = false
+  }
+}
+
+function setProjectName(name, immediate = false) {
+  state.projectName = name
+  clearTimeout(searchTimer)
+  if (immediate) {
+    fetchProjects(1)
+  } else {
+    searchTimer = setTimeout(() => {
+      fetchProjects(1)
+    }, 300)
   }
 }
 
@@ -90,6 +111,17 @@ async function removeProject(id) {
   }
 }
 
+async function batchRemoveProject(ids) {
+  try {
+    await projectsApi.batchRemove(ids)
+    state.items = state.items.filter((p) => !ids.includes(p.id))
+    state.total = state.items.length
+  } catch (err) {
+    state.error = err.message
+    throw err
+  }
+}
+
 async function retryProject(id) {
   try {
     await projectsApi.retry(id)
@@ -130,9 +162,13 @@ export function useProjects() {
     totalPages: computed(() => state.pages),
     total: computed(() => state.total),
     fetchProjects,
+    setProjectName,
+    projectName: computed(() => state.projectName),
+    fetchCounter: computed(() => state.fetchCounter),
     addProjectFromGit,
     addProjectFromZip,
     removeProject,
+    batchRemoveProject,
     retryProject,
     updateProject,
     getProjectById,

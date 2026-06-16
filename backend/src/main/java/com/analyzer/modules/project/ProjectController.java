@@ -37,7 +37,7 @@ public class ProjectController {
      */
     @Operation(summary = "通过 Git 创建项目")
     @PostMapping("/create")
-    public Result<?> createFromGit(@RequestBody ProjectCreateDTO createDTO) {
+    public Result<?> createFromGit(@Validated @RequestBody ProjectCreateDTO createDTO) {
         projectService.saveFromGit(createDTO);
         return Result.success();
     }
@@ -64,7 +64,7 @@ public class ProjectController {
      */
     @Operation(summary = "批量删除项目")
     @PostMapping("/delete")
-    public Result<?> deleteBatchProject(@Validated ProjectDeleteDTO projectDeleteDTO) {
+    public Result<?> deleteBatchProject(@Validated @RequestBody ProjectDeleteDTO projectDeleteDTO) {
         projectService.deleteBatch(projectDeleteDTO.getProjectIds());
         return Result.success();
     }

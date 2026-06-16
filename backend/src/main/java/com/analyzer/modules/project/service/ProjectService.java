@@ -14,6 +14,8 @@ import com.analyzer.modules.project.model.ProjectCreateDTO;
 import com.analyzer.modules.project.model.ProjectDetailDTO;
 import com.analyzer.modules.project.model.ProjectPageDTO;
 import com.analyzer.modules.project.model.ProjectVO;
+import com.analyzer.modules.project.progress.ProgressTracker;
+import com.analyzer.modules.project.progress.ProgressTrackerFactory;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,13 +23,11 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -43,9 +43,13 @@ public class ProjectService {
     private final ProjectParsingService parsingService;
     private final GitService gitService;
     private final ZipService zipService;
+    private final ProgressTrackerFactory progressTrackerFactory;
 
     /**
      * 通过 zip 上传项目
+     *
+     * @param file        文件
+     * @param projectName 项目名
      */
     public void saveFromZip(MultipartFile file, String projectName) {
         fileValidationService.validateFile(file, appConfig.getMaxFileSize());
@@ -55,31 +59,34 @@ public class ProjectService {
         zipService.validateZipContentType(contentType);
 
         String resolvedName = projectName != null ? projectName : generateDefaultProjectName();
-        String projectId = UUID.randomUUID().toString().replace("-", "");
+        String projectId = generateProjectId();
         String localPath = appConfig.getUploadPath() + "/" + projectId;
 
-        zipService.unzip(file, localPath);
+        ProgressTracker tracker = progressTrackerFactory.create(appConfig.getTopic(), projectId);
+
         try {
-            ProjectPO projectPO = new ProjectPO();
-            projectPO.setProjectId(projectId);
-            projectPO.setName(resolvedName);
-            projectPO.setLocalPath(localPath);
-            projectPO.setStatus(ProjectStatus.PARSING);
-            projectPO.setMethod(UploadMethod.ZIP);
-            projectPersistenceService.save(projectPO);
-        } catch (DuplicateKeyException e) {
-            FileUtils.deleteQuietly(new File(localPath));
-            throw new BusinessException(ErrorCode.DUPLICATE_PROJECT);
+            zipService.unzip(file, localPath, tracker.itemCallback("EXTRACTING", 10, 60));
+
+            ProjectPO projectPO = buildProjectPO(projectId, resolvedName, null, localPath, UploadMethod.ZIP);
+            tracker.step("SAVING", 60, 80, "保存项目信息", () ->
+                    saveProject(projectPO, new File(localPath))
+            );
+
+            tracker.update("PARSING", 80, "开始解析");
+            parsingService.parseAsync(projectId, localPath);
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
-            FileUtils.deleteQuietly(new File(localPath));
+            cleanup(projectId, new File(localPath));
+            tracker.error("上传失败: " + e.getMessage());
             throw e;
         }
-
-        parsingService.parseAsync(projectId, localPath);
     }
 
     /**
-     * 通过 git 链接上传
+     * 通过 git 链接创建
+     *
+     * @param createDTO 创建 dto
      */
     public void saveFromGit(ProjectCreateDTO createDTO) {
         String gitUrl = createDTO.getGitUrl();
@@ -89,28 +96,30 @@ public class ProjectService {
                 ? createDTO.getName()
                 : GitUtils.extractRepoName(gitUrl);
 
-        String projectId = UUID.randomUUID().toString().replace("-", "");
+        String projectId = generateProjectId();
         String localPath = appConfig.getUploadPath() + "/" + projectId;
 
-        File localDir = gitService.cloneRepository(gitUrl, projectId, localPath);
+        ProgressTracker tracker = progressTrackerFactory.create(appConfig.getTopic(), projectId);
+
         try {
-            ProjectPO projectPO = new ProjectPO();
-            projectPO.setProjectId(projectId);
-            projectPO.setName(projectName);
-            projectPO.setGitUrl(gitUrl);
-            projectPO.setLocalPath(localDir.getAbsolutePath());
-            projectPO.setStatus(ProjectStatus.PARSING);
-            projectPO.setMethod(UploadMethod.GIT);
-            projectPersistenceService.save(projectPO);
-        } catch (DuplicateKeyException e) {
-            FileUtils.deleteQuietly(localDir);
-            throw new BusinessException(ErrorCode.DUPLICATE_PROJECT);
+            File localDir = tracker.step("CLONING", 10, 60, "克隆仓库", () ->
+                    gitService.cloneRepository(gitUrl, projectId, localPath)
+            );
+
+            ProjectPO projectPO = buildProjectPO(projectId, projectName, gitUrl, localDir.getAbsolutePath(), UploadMethod.GIT);
+            tracker.step("SAVING", 60, 80, "保存项目信息", () ->
+                    saveProject(projectPO, localDir)
+            );
+
+            tracker.update("PARSING", 80, "开始解析");
+            parsingService.parseAsync(projectId, localDir.getAbsolutePath());
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
-            FileUtils.deleteQuietly(localDir);
+            cleanup(projectId, new File(localPath));
+            tracker.error("上传失败: " + e.getMessage());
             throw e;
         }
-
-//        parsingService.parseAsync(projectId, localDir.getAbsolutePath());
     }
 
     /**
@@ -120,16 +129,10 @@ public class ProjectService {
      * @return 查询结果
      */
     public Page<ProjectVO> listPage(ProjectPageDTO pageDTO) {
-        Page<ProjectPO> result = projectPersistenceService.listPage(pageDTO.getPage(), pageDTO.getSize());
+        Page<ProjectPO> result = projectPersistenceService.listPage(pageDTO.getPage(), pageDTO.getSize(), pageDTO.getProjectName());
         Page<ProjectVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
         voPage.setRecords(result.getRecords().stream()
-                .map(po -> {
-                    ProjectVO vo = new ProjectVO();
-                    BeanUtils.copyProperties(po, vo);
-                    vo.setStatus(po.getStatus().getValue());
-                    vo.setUploadMethod(po.getMethod().getValue());
-                    return vo;
-                })
+                .map(this::convertToVO)
                 .collect(Collectors.toList()));
         return voPage;
     }
@@ -163,40 +166,79 @@ public class ProjectService {
      *
      * @param projectIds 项目ID列表
      */
+    @Transactional(rollbackFor = Exception.class)
     public void deleteBatch(List<String> projectIds) {
-        // 如果什么都没传, 直接返回成功
         if (projectIds == null || projectIds.isEmpty()) {
             return;
         }
 
-        List<ProjectPO> projects = projectPersistenceService.findAllByIds(projectIds);
-        Path allowedRoot = Paths.get(appConfig.getUploadPath()).toAbsolutePath().normalize();
+        // 仅标记状态
+        projectPersistenceService.batchUpdateStatus(projectIds, ProjectStatus.DELETED);
+    }
 
-        for (ProjectPO po : projects) {
-            // 先删库记录, 再删文件
-            projectPersistenceService.deleteById(po.getProjectId());
+    /**
+     * 生成项目 ID
+     */
+    private String generateProjectId() {
+        return UUID.randomUUID().toString().replace("-", "");
+    }
 
-            if (StringUtils.hasText(po.getLocalPath())) {
-                Path target = Paths.get(po.getLocalPath()).toAbsolutePath().normalize();
-                if (!target.startsWith(allowedRoot)) {
-                    log.warn("拒绝删除范围外的路径, 项目ID: {}, 路径: {}", po.getProjectId(), target);
-                    continue;
-                }
-                try {
-                    FileUtils.deleteDirectory(target.toFile());
-                } catch (IOException e) {
-                    log.error("删除目录失败, 项目ID: {}, 路径: {}", po.getProjectId(), target, e);
-                }
-            }
+    /**
+     * 生成默认项目名
+     */
+    private String generateDefaultProjectName() {
+        return "未命名项目_" + System.currentTimeMillis();
+    }
+
+    /**
+     * 构建项目po
+     */
+    private ProjectPO buildProjectPO(String projectId, String name, String gitUrl, String localPath, UploadMethod method) {
+        ProjectPO po = new ProjectPO();
+        po.setProjectId(projectId);
+        po.setName(name);
+        po.setGitUrl(gitUrl);
+        po.setLocalPath(localPath);
+        po.setStatus(ProjectStatus.PARSING);
+        po.setMethod(method);
+        return po;
+    }
+
+    /**
+     * 保存项目
+     */
+    private void saveProject(ProjectPO projectPO, File cleanupTarget) {
+        try {
+            projectPersistenceService.save(projectPO);
+        } catch (DuplicateKeyException e) {
+            FileUtils.deleteQuietly(cleanupTarget);
+            throw new BusinessException(ErrorCode.DUPLICATE_PROJECT);
+        } catch (Exception e) {
+            FileUtils.deleteQuietly(cleanupTarget);
+            throw e;
         }
     }
 
     /**
-     * 创建默认项目名
-     *
-     * @return 项目名称
+     * 清理本地文件
      */
-    private String generateDefaultProjectName() {
-        return "未命名项目_" + System.currentTimeMillis();
+    private void cleanup(String projectId, File localDir) {
+        FileUtils.deleteQuietly(localDir);
+        try {
+            projectPersistenceService.deleteById(projectId);
+        } catch (Exception ignored) {
+            // 可能尚未入库，忽略
+        }
+    }
+
+    /**
+     * 转换为vo
+     */
+    private ProjectVO convertToVO(ProjectPO po) {
+        ProjectVO vo = new ProjectVO();
+        BeanUtils.copyProperties(po, vo);
+        vo.setStatus(po.getStatus().getValue());
+        vo.setUploadMethod(po.getMethod().getValue());
+        return vo;
     }
 }

@@ -9,7 +9,10 @@ import lombok.Getter;
 public enum ProjectStatus {
     PARSING(0),
     READY(1),
-    FAILED(-1);
+    FAILED(-1),
+    DELETED(-2)
+    ;
+
 
     @EnumValue
     private final int value;

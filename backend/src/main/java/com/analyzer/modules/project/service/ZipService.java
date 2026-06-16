@@ -1,6 +1,7 @@
 package com.analyzer.modules.project.service;
 
 import com.analyzer.common.result.exception.BusinessException;
+import com.analyzer.modules.project.progress.ItemProgressCallback;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,22 +38,23 @@ public class ZipService {
 
     /**
      * 解压 ZIP 到指定目录
-     * @param file 文件
-     * @param destDir 目录
+     * @param file zip文件
+     * @param destDir 基目录
+     * @param callback 回调函数
      */
-    public void unzip(MultipartFile file, String destDir) {
+    public void unzip(MultipartFile file, String destDir, ItemProgressCallback callback) {
         Path destPath = Paths.get(destDir);
         long totalSize = 0;
         int entryCount = 0;
+        int fileCount = 0;
+        int totalFiles = countFileEntries(file);
         try (ZipInputStream zis = new ZipInputStream(file.getInputStream())) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
-                // 防止条目数过多
                 if (++entryCount > MAX_ENTRY_COUNT) {
                     throw new BusinessException(ErrorCode.ZIP_TOO_MANY_ENTRIES);
                 }
                 Path filePath = destPath.resolve(entry.getName()).normalize();
-                // 防止 zip slip 攻击, 防止恶意条目, 如 ../../../../etc/cron.d/malicious
                 if (!filePath.startsWith(destPath)) {
                     throw new BusinessException(ErrorCode.ZIP_ILLEGAL_ENTRY);
                 }
@@ -60,10 +62,13 @@ public class ZipService {
                     Files.createDirectories(filePath);
                 } else {
                     Files.createDirectories(filePath.getParent());
-                    // 防止解压文件过大，限制单次写入总量
                     totalSize += Files.copy(zis, filePath, StandardCopyOption.REPLACE_EXISTING);
                     if (totalSize > MAX_UNCOMPRESSED_SIZE) {
                         throw new BusinessException(ErrorCode.ZIP_UNCOMPRESSED_TOO_LARGE);
+                    }
+                    fileCount++;
+                    if (callback != null) {
+                        callback.onItem(entry.getName(), fileCount, totalFiles);
                     }
                 }
                 zis.closeEntry();
@@ -71,5 +76,24 @@ public class ZipService {
         } catch (IOException e) {
             throw new BusinessException(ErrorCode.ZIP_EXTRACT_FAILED);
         }
+    }
+
+    /**
+     * 预先统计文件条目数
+     */
+    private int countFileEntries(MultipartFile file) {
+        int count = 0;
+        try (ZipInputStream zis = new ZipInputStream(file.getInputStream())) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (!entry.isDirectory()) {
+                    count++;
+                }
+                zis.closeEntry();
+            }
+        } catch (IOException e) {
+            return 0;
+        }
+        return count;
     }
 }

@@ -21,8 +21,11 @@ async function request(path, options = {}) {
 }
 
 export const projectsApi = {
-  getList: (page, size) =>
-    request(`/project/?page=${page}&size=${size}`),
+  getList: (page, size, projectName) => {
+    let url = `/project/?page=${page}&size=${size}`
+    if (projectName) url += `&projectName=${encodeURIComponent(projectName)}`
+    return request(url)
+  },
 
   createFromGit: (gitUrl, name) =>
     request('/project/create', {
@@ -46,6 +49,12 @@ export const projectsApi = {
 
   remove: (id) =>
     request(`/project/${id}`, { method: 'DELETE' }),
+
+  batchRemove: (projectIds) =>
+    request('/project/delete', {
+      method: 'POST',
+      body: JSON.stringify({ projectIds }),
+    }),
 
   retry: (id) =>
     request(`/project/${id}/retry`, { method: 'POST' }),
