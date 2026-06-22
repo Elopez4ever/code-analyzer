@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -160,13 +161,12 @@ public class ProjectPersistenceService {
      * 通过项目状态寻找项目
      */
     public List<ProjectPO> findByStatus(ProjectStatus status) {
-        if (projectIds == null || projectIds.isEmpty()) {
-            return;
+        if (status == null) {
+            return Collections.emptyList();
         }
-        return projectMapper.selectPage(
-                new Page<>(pageNum, pageSize),
+        return projectMapper.selectList(
                 new LambdaQueryWrapper<ProjectPO>()
-                        .like(StringUtils.hasText(projectName), ProjectPO::getName, projectName)
+                        .eq(ProjectPO::getStatus, status)
                         .orderByDesc(ProjectPO::getCreatedAt)
         );
     }
