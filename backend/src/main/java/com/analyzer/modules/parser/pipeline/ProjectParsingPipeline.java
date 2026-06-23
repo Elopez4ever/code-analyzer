@@ -1,6 +1,7 @@
 package com.analyzer.modules.parser.pipeline;
 
 import com.analyzer.common.result.exception.BusinessException;
+import com.analyzer.common.result.exception.ErrorCode;
 import com.analyzer.infrastructure.ai.embedding.EmbeddingService;
 import com.analyzer.infrastructure.vectorstore.VectorStoreService;
 import com.analyzer.infrastructure.vectorstore.entity.CodeChunkVector;
@@ -13,11 +14,12 @@ import org.springframework.stereotype.Service;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
  * 向量化存储一个项目
- *  parse -> chunk -> enrich -> embed -> embed -> store
+ *  parse -> chunk -> enrich -> embed -> store
  */
 @Slf4j
 @Service
@@ -35,9 +37,10 @@ public class ProjectParsingPipeline {
 
         // 将项目拆分为 SourceFiles
         ProjectParser parser = parsers.stream()
+                .sorted(Comparator.comparingInt(ProjectParser::priority))
                 .filter(p -> p.supports(root))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException("未找到匹配项目的parser!"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.PARSER_NOT_FOUND));
         List<SourceFile> sourceFiles = parser.parse(root);
 
         // 分块

@@ -1,6 +1,5 @@
 package com.analyzer.modules.project.progress;
 
-import com.analyzer.common.config.AppConfigProperties;
 import com.analyzer.infrastructure.websocket.WebSocketEventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

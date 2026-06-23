@@ -109,7 +109,8 @@ public class ProjectPersistenceService {
         return projectMapper.selectPage(
                 new Page<>(pageNum, pageSize),
                 new LambdaQueryWrapper<ProjectPO>()
-                        .like(StringUtils.hasText(projectName), ProjectPO::getName, projectName)
+                        .apply(StringUtils.hasText(projectName), "name ILIKE {0}", "%" + projectName + "%")
+                        .ne(ProjectPO::getStatus, ProjectStatus.DELETED)
                         .orderByDesc(ProjectPO::getCreatedAt)
         );
     }

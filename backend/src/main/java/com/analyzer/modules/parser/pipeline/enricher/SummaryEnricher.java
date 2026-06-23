@@ -48,7 +48,7 @@ public class SummaryEnricher implements ChunkEnricher {
         // 带上已有的 metadata 和 keywords，让 AI 有更多上下文
         StringBuilder sb = new StringBuilder();
         sb.append("文件: ").append(chunk.getFilePath()).append("\n");
-        sb.append("类型: ").append(chunk.getChunkType()).append("\n");
+        sb.append("角色: ").append(chunk.getRole()).append("\n");
         if (chunk.getMetadata().get("className") != null) {
             sb.append("类名: ").append(chunk.getMetadata().get("className")).append("\n");
         }

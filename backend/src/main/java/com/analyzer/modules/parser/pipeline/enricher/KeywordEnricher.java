@@ -28,8 +28,8 @@ public class KeywordEnricher implements ChunkEnricher {
     @Override
     public CodeChunk enrich(CodeChunk chunk) {
         List<String> keywords = new ArrayList<>();
-        keywords.add("type:" + chunk.getChunkType().name().toLowerCase());
-        List<ExtractionRule> rules = ruleRegistry.getKeywordRules(chunk.getChunkType());
+        keywords.add("role:" + chunk.getRole().name().toLowerCase());
+        List<ExtractionRule> rules = ruleRegistry.getKeywordRules(chunk.getRole());
         for (ExtractionRule rule : rules) {
             if (rule.matches(chunk)) {
                 keywords.add(rule.output());

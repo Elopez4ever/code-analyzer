@@ -4,19 +4,27 @@ import com.analyzer.modules.parser.pipeline.ChunkEnricher;
 import com.analyzer.modules.parser.pipeline.domain.CodeChunk;
 import com.analyzer.modules.parser.pipeline.domain.EnricherPriority;
 import com.analyzer.modules.parser.pipeline.enricher.extractor.StructureExtractor;
-import lombok.AllArgsConstructor;
+import com.analyzer.modules.parser.pipeline.enricher.rule.ExtractionRule;
+import com.analyzer.modules.parser.pipeline.enricher.rule.RuleRegistry;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
 
 /**
  * 为 CodeChunk 填充结构化元数据：包名、类名、方法签名、修饰符、所属模块路径等
+ * <p>
+ * 数据来源有两层：
+ * 1. {@link StructureExtractor}（如 {@code RuleBasedExtractor}）通过正则捕获结构化字段
+ * 2. {@link RuleRegistry#getMetadataRules} 通过谓词规则补充分类标签
  */
 @Component
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class MetadataEnricher implements ChunkEnricher {
 
     private final List<StructureExtractor> extractors;
+    private final RuleRegistry ruleRegistry;
 
     @Override
     public int order() {
@@ -25,9 +33,39 @@ public class MetadataEnricher implements ChunkEnricher {
 
     @Override
     public CodeChunk enrich(CodeChunk chunk) {
-       extractors.stream()
-               .filter(e -> e.supportedTypes().contains(chunk.getChunkType()))
-               .forEach(e -> e.extract(chunk));
-       return chunk;
+        // 第一层：正则提取结构化字段（className, methodName, packageName 等）
+        extractors.stream()
+                .filter(e -> e.supportedRoles().contains(chunk.getRole()))
+                .filter(e -> e.supportsLanguage(chunk.getLanguage()))
+                .forEach(e -> e.extract(chunk));
+
+        // 第二层：谓词规则补充分类标签（templateEngine, configFormat, framework 等）
+        List<ExtractionRule> metadataRules = ruleRegistry.getMetadataRules(chunk.getRole());
+        if (!metadataRules.isEmpty()) {
+            if (chunk.getMetadata() == null) {
+                chunk.setMetadata(new HashMap<>());
+            }
+            for (ExtractionRule rule : metadataRules) {
+                if (rule.matches(chunk)) {
+                    applyMetadataRule(chunk, rule.output());
+                }
+            }
+        }
+
+        return chunk;
+    }
+
+    /**
+     * 将规则输出 {@code key:value} 写入 chunk.metadata。
+     * 若输出不含冒号则跳过；使用 {@code putIfAbsent} 避免覆盖 extractor 提取的精确值。
+     */
+    private void applyMetadataRule(CodeChunk chunk, String output) {
+        int colonIdx = output.indexOf(':');
+        if (colonIdx <= 0) {
+            return;
+        }
+        String key = output.substring(0, colonIdx);
+        String value = output.substring(colonIdx + 1);
+        chunk.getMetadata().putIfAbsent(key, value);
     }
 }

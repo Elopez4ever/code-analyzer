@@ -15,16 +15,16 @@ CREATE TABLE IF NOT EXISTS project (
                                        git_url       TEXT,
                                        local_path    TEXT,
                                        status        INT NOT NULL DEFAULT 0,
-                                       method       INT NOT NULL DEFAULT 0,
+                                       method        INT NOT NULL DEFAULT 0,
                                        chunk_count   INT DEFAULT 0,
                                        created_at    TIMESTAMP DEFAULT NOW(),
                                        updated_at    TIMESTAMP DEFAULT NOW()
 );
 
 -- 项目名全局唯一
-CREATE UNIQUE INDEX IF NOT EXISTS uk_project_name ON project (name);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_project_name ON project (name) WHERE status != -2;
 -- Git 仓库地址唯一
-CREATE UNIQUE INDEX IF NOT EXISTS uk_project_git_url ON project (git_url);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_project_git_url ON project (git_url) WHERE status != -2;
 
 -- ============================================
 -- 代码块表

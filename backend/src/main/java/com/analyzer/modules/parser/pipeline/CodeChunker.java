@@ -13,4 +13,6 @@ import java.util.List;
 public interface CodeChunker {
     boolean supports(FileLanguage language);
     List<CodeChunk> chunk(SourceFile sourceFile, String projectId);
+    // 数字越小越优先
+    default int priority() {return 0;}
 }

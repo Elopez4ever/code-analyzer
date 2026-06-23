@@ -1,9 +1,9 @@
 package com.analyzer.modules.parser.pipeline.enricher.rule;
 
-import com.analyzer.modules.parser.pipeline.domain.CodeChunkType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import java.util.List;
+import com.analyzer.modules.parser.pipeline.domain.CodeRole;
 import static com.analyzer.modules.parser.pipeline.enricher.rule.ExtractionRule.*;
 
 /**
@@ -11,10 +11,8 @@ import static com.analyzer.modules.parser.pipeline.enricher.rule.ExtractionRule.
  */
 @Configuration
 public class RuleDefinitions {
-    private static final List<CodeChunkType> JAVA_TYPES = List.of(
-            CodeChunkType.CLASS, CodeChunkType.INTERFACE, CodeChunkType.ENUM,
-            CodeChunkType.CONTROLLER, CodeChunkType.SERVICE, CodeChunkType.REPOSITORY,
-            CodeChunkType.ENTITY, CodeChunkType.CONFIGURATION, CodeChunkType.COMPONENT
+    private static final List<CodeRole> JAVA_CLASS_ROLES = List.of(
+            CodeRole.CLASS_DECLARATION, CodeRole.INTERFACE_DECLARATION, CodeRole.ENUM_DECLARATION
     );
 
     /**
@@ -54,10 +52,10 @@ public class RuleDefinitions {
                 contentContains("@Cacheable", "cached"),
                 contentContains("@CacheEvict", "cached")
         );
-        registry.addKeywordRules(JAVA_TYPES, rules);
+        registry.addKeywordRules(JAVA_CLASS_ROLES, rules);
     }
     private void registerMethodKeywords(RuleRegistry registry) {
-        registry.addKeywordRules(CodeChunkType.METHOD, List.of(
+        registry.addKeywordRules(CodeRole.METHOD, List.of(
                 contentContains("GetMapping", "http:GET"),
                 contentContains("PostMapping", "http:POST"),
                 contentContains("PutMapping", "http:PUT"),
@@ -75,7 +73,7 @@ public class RuleDefinitions {
         ));
     }
     private void registerTemplateKeywords(RuleRegistry registry) {
-        registry.addKeywordRules(CodeChunkType.TEMPLATE, List.of(
+        registry.addKeywordRules(CodeRole.UNKNOWN, List.of(
                 contentContains("th:", "thymeleaf"),
                 contentContains("v-if", "vue-directive"),
                 contentContains("v-for", "vue-directive"),
@@ -90,7 +88,7 @@ public class RuleDefinitions {
         ));
     }
     private void registerScriptKeywords(RuleRegistry registry) {
-        registry.addKeywordRules(CodeChunkType.SCRIPT, List.of(
+        registry.addKeywordRules(CodeRole.UNKNOWN, List.of(
                 contentContains("useState", "react-hooks"),
                 contentContains("useEffect", "react-hooks"),
                 contentContains("defineComponent", "vue-composition"),
@@ -105,7 +103,7 @@ public class RuleDefinitions {
         ));
     }
     private void registerStyleKeywords(RuleRegistry registry) {
-        registry.addKeywordRules(CodeChunkType.STYLE, List.of(
+        registry.addKeywordRules(CodeRole.UNKNOWN, List.of(
                 contentContains("@media", "responsive"),
                 contentContains("flex", "layout"),
                 contentContains("grid", "layout"),
@@ -116,7 +114,7 @@ public class RuleDefinitions {
         ));
     }
     private void registerConfigKeywords(RuleRegistry registry) {
-        registry.addKeywordRules(CodeChunkType.CONFIG_FILE, List.of(
+        registry.addKeywordRules(CodeRole.CONFIG_BLOCK, List.of(
                 contentContains("datasource", "database-config"),
                 contentContains("redis", "redis-config"),
                 contentContains("server.port", "server-config"),
@@ -129,32 +127,32 @@ public class RuleDefinitions {
     }
     private void registerMetadataRules(RuleRegistry registry) {
         // 模板引擎
-        registry.addMetadataRule(CodeChunkType.TEMPLATE, when(c -> c.getContent().contains("th:"), "templateEngine:thymeleaf"));
-        registry.addMetadataRule(CodeChunkType.TEMPLATE, when(c -> c.getContent().contains("v-if"), "templateEngine:vue"));
-        registry.addMetadataRule(CodeChunkType.TEMPLATE, when(c -> c.getContent().contains("{{"), "templateEngine:mustache"));
-        registry.addMetadataRule(CodeChunkType.TEMPLATE, when(c -> c.getContent().contains("<%"), "templateEngine:jsp"));
+        registry.addMetadataRule(CodeRole.UNKNOWN, when(c -> c.getContent().contains("th:"), "templateEngine:thymeleaf"));
+        registry.addMetadataRule(CodeRole.UNKNOWN, when(c -> c.getContent().contains("v-if"), "templateEngine:vue"));
+        registry.addMetadataRule(CodeRole.UNKNOWN, when(c -> c.getContent().contains("{{"), "templateEngine:mustache"));
+        registry.addMetadataRule(CodeRole.UNKNOWN, when(c -> c.getContent().contains("<%"), "templateEngine:jsp"));
         // 配置格式
-        registry.addMetadataRule(CodeChunkType.CONFIG_FILE, pathEndsWith(".yml", "configFormat:yaml"));
-        registry.addMetadataRule(CodeChunkType.CONFIG_FILE, pathEndsWith(".yaml", "configFormat:yaml"));
-        registry.addMetadataRule(CodeChunkType.CONFIG_FILE, pathEndsWith(".properties", "configFormat:properties"));
-        registry.addMetadataRule(CodeChunkType.CONFIG_FILE, pathEndsWith(".json", "configFormat:json"));
-        registry.addMetadataRule(CodeChunkType.CONFIG_FILE, pathEndsWith(".xml", "configFormat:xml"));
-        registry.addMetadataRule(CodeChunkType.CONFIG_FILE, pathEndsWith(".toml", "configFormat:toml"));
+        registry.addMetadataRule(CodeRole.CONFIG_BLOCK, pathEndsWith(".yml", "configFormat:yaml"));
+        registry.addMetadataRule(CodeRole.CONFIG_BLOCK, pathEndsWith(".yaml", "configFormat:yaml"));
+        registry.addMetadataRule(CodeRole.CONFIG_BLOCK, pathEndsWith(".properties", "configFormat:properties"));
+        registry.addMetadataRule(CodeRole.CONFIG_BLOCK, pathEndsWith(".json", "configFormat:json"));
+        registry.addMetadataRule(CodeRole.CONFIG_BLOCK, pathEndsWith(".xml", "configFormat:xml"));
+        registry.addMetadataRule(CodeRole.CONFIG_BLOCK, pathEndsWith(".toml", "configFormat:toml"));
         // 配置用途
-        registry.addMetadataRule(CodeChunkType.CONFIG_FILE, fileNameContains("application", "configPurpose:spring-application"));
-        registry.addMetadataRule(CodeChunkType.CONFIG_FILE, fileNameContains("pom", "configPurpose:maven-build"));
-        registry.addMetadataRule(CodeChunkType.CONFIG_FILE, fileNameContains("docker", "configPurpose:container"));
+        registry.addMetadataRule(CodeRole.CONFIG_BLOCK, fileNameContains("application", "configPurpose:spring-application"));
+        registry.addMetadataRule(CodeRole.CONFIG_BLOCK, fileNameContains("pom", "configPurpose:maven-build"));
+        registry.addMetadataRule(CodeRole.CONFIG_BLOCK, fileNameContains("docker", "configPurpose:container"));
         // 样式预处理器
-        registry.addMetadataRule(CodeChunkType.STYLE, pathEndsWith(".scss", "preprocessor:scss"));
-        registry.addMetadataRule(CodeChunkType.STYLE, pathEndsWith(".less", "preprocessor:less"));
-        registry.addMetadataRule(CodeChunkType.STYLE, pathEndsWith(".sass", "preprocessor:sass"));
-        registry.addMetadataRule(CodeChunkType.STYLE, pathEndsWith(".css", "preprocessor:css"));
+        registry.addMetadataRule(CodeRole.UNKNOWN, pathEndsWith(".scss", "preprocessor:scss"));
+        registry.addMetadataRule(CodeRole.UNKNOWN, pathEndsWith(".less", "preprocessor:less"));
+        registry.addMetadataRule(CodeRole.UNKNOWN, pathEndsWith(".sass", "preprocessor:sass"));
+        registry.addMetadataRule(CodeRole.UNKNOWN, pathEndsWith(".css", "preprocessor:css"));
         // 脚本框架
-        registry.addMetadataRule(CodeChunkType.SCRIPT, when(c -> c.getContent().contains("useState"), "framework:react"));
-        registry.addMetadataRule(CodeChunkType.SCRIPT, when(c -> c.getContent().contains("defineComponent"), "framework:vue"));
-        registry.addMetadataRule(CodeChunkType.SCRIPT, when(c -> c.getContent().contains("@NgModule"), "framework:angular"));
+        registry.addMetadataRule(CodeRole.UNKNOWN, when(c -> c.getContent().contains("useState"), "framework:react"));
+        registry.addMetadataRule(CodeRole.UNKNOWN, when(c -> c.getContent().contains("defineComponent"), "framework:vue"));
+        registry.addMetadataRule(CodeRole.UNKNOWN, when(c -> c.getContent().contains("@NgModule"), "framework:angular"));
         // 脚本模块类型
-        registry.addMetadataRule(CodeChunkType.SCRIPT, when(c -> c.getContent().contains("export default"), "moduleType:default-export"));
-        registry.addMetadataRule(CodeChunkType.SCRIPT, when(c -> c.getContent().contains("module.exports"), "moduleType:commonjs"));
+        registry.addMetadataRule(CodeRole.UNKNOWN, when(c -> c.getContent().contains("export default"), "moduleType:default-export"));
+        registry.addMetadataRule(CodeRole.UNKNOWN, when(c -> c.getContent().contains("module.exports"), "moduleType:commonjs"));
     }
 }

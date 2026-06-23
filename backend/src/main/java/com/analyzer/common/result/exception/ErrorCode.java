@@ -24,6 +24,10 @@ public enum ErrorCode {
     ZIP_UNCOMPRESSED_TOO_LARGE(410, "上传文件过大"),
     ZIP_EXTRACT_FAILED(411, "文件解压失败"),
     PROJECT_NOT_FOUND(412, "项目不存在"),
+
+    // ========== Parser Module 错误 ==========
+    PARSER_NOT_FOUND(413, "未找到符合项目的Parser"),
+    PARSE_FAILED(414, "解析出错"),
     ;
 
     private final Integer code;

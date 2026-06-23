@@ -72,7 +72,7 @@ public class ProjectService {
                     saveProject(projectPO, new File(localPath))
             );
 
-            tracker.update("PARSING", 80, "开始解析");
+            tracker.complete("项目已就绪，正在后台解析代码结构");
             parsingService.parseAsync(projectId, localPath);
         } catch (BusinessException e) {
             throw e;
@@ -111,7 +111,7 @@ public class ProjectService {
                     saveProject(projectPO, localDir)
             );
 
-            tracker.update("PARSING", 80, "开始解析");
+            tracker.complete("项目已就绪，正在后台解析代码结构");
             parsingService.parseAsync(projectId, localDir.getAbsolutePath());
         } catch (BusinessException e) {
             throw e;

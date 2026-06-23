@@ -32,6 +32,10 @@ public class ProgressTracker {
         update("ERROR", 0, message);
     }
 
+    public void complete(String message) {
+        update("COMPLETED", 100, message);
+    }
+
     /**
      * 返回一个通用的逐项回调
      */

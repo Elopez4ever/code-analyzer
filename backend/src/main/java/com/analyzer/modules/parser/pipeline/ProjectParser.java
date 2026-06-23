@@ -15,4 +15,9 @@ public interface ProjectParser {
      * 提取项目中需要解析的源文件
      */
     List<SourceFile> parse(Path projectRoot);
+
+    /**
+     * 优先级, 值越小约优先匹配
+     */
+    default int priority() {return 100;}
 }

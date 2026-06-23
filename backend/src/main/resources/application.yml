@@ -29,6 +29,9 @@ code-parser:
     - "**/*.class"
     - "**/*.jar"
     - "**/*.war"
+    - "**/*.zip"
+    - "**/*.tar.gz"
+    - "**/*.rar"
   rules:
     - language: JAVA
       extensions: [".java"]
