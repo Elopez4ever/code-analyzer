@@ -1,11 +1,12 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import logo from './assets/logo.svg'
+import ParticleCanvas from './components/ParticleCanvas.vue'
 import { useToasts } from './utils/toast'
 
 const { toasts, dismissToast } = useToasts()
 
-const theme = ref('light')
+const theme = ref('dark')
 const isDark = computed(() => theme.value === 'dark')
 
 const applyTheme = (value) => {
@@ -28,13 +29,17 @@ const toggleTheme = () => {
 
 onMounted(() => {
   const saved = localStorage.getItem('theme')
+  if (saved) { applyTheme(saved); return }
   const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)')?.matches
-  applyTheme(saved || (prefersDark ? 'dark' : 'light'))
+  applyTheme(prefersDark ? 'dark' : 'light')
 })
 </script>
 
 <template>
   <div class="app-shell">
+    <!-- 全局粒子背景 -->
+    <ParticleCanvas :theme="theme" />
+
     <header class="app-header">
       <div class="brand">
         <img :src="logo" alt="Code Analyzer" class="brand-logo" />
