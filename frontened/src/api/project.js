@@ -17,7 +17,8 @@ async function request(path, options = {}) {
   if (!res.ok || json.code !== 200) {
     throw new Error(json.message || `请求失败 (${res.status})`)
   }
-  return json.data ?? null
+  // Prefer the `data` envelope; fall back to full JSON when backend omits it
+  return json.data ?? json
 }
 
 export const projectsApi = {
@@ -44,7 +45,7 @@ export const projectsApi = {
         }
 
         if (!res.ok || data.code !== 200) throw new Error(data.message || `上传失败 (${res.status})`)
-        return data.data
+        return data.data ?? data
       }),
 
   remove: (id) =>

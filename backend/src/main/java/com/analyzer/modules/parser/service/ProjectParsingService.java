@@ -22,7 +22,7 @@ public class ProjectParsingService {
             pipeline.execute(projectId, projectPath);
             persistenceService.updateStatus(projectId, ProjectStatus.READY);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("项目 {} 解析失败", projectId, e);
             persistenceService.updateStatus(projectId, ProjectStatus.FAILED);
         }
     }

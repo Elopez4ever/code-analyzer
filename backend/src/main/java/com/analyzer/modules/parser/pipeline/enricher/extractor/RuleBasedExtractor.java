@@ -6,6 +6,7 @@ import com.analyzer.modules.parser.pipeline.domain.FileLanguage;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class RuleBasedExtractor implements StructureExtractor {
@@ -32,13 +33,13 @@ public class RuleBasedExtractor implements StructureExtractor {
 
     @Override
     public void extract(CodeChunk chunk) {
-        if (chunk.getMetadata() == null) {
-            chunk.setMetadata(new HashMap<>());
-        }
+        Map<String, String> existing = chunk.getMetadata();
+        Map<String, String> meta = new HashMap<>(existing != null ? existing : Map.of());
         String content = chunk.getContent();
         for (ExtractionRule rule : rules) {
-            rule.apply(content).ifPresent(v -> chunk.getMetadata().put(rule.getMetadataKey(), v));
+            rule.apply(content).ifPresent(v -> meta.put(rule.getMetadataKey(), v));
         }
+        chunk.setMetadata(meta);
     }
 
     public static Builder builder() {

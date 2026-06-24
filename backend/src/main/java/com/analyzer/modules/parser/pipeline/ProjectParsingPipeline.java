@@ -54,7 +54,7 @@ public class ProjectParsingPipeline {
         List<CodeChunk> enrichedChunks = enricherPipeline.enrich(chunks);
 
         // 4. embed + store: 批量向量化并存储
-        embedAndStore(enrichedChunks);
+        // embedAndStore(enrichedChunks);
         log.info("项目 {} 索引完成, 共存储 {} 个向量", projectId, enrichedChunks.size());
     }
 

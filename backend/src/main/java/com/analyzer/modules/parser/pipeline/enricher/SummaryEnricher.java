@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  * 使用 LLM 生成自然语言摘要
  */
 @Slf4j
-@Component
+//@Component
 @RequiredArgsConstructor
 public class SummaryEnricher implements ChunkEnricher {
 
@@ -49,11 +49,13 @@ public class SummaryEnricher implements ChunkEnricher {
         StringBuilder sb = new StringBuilder();
         sb.append("文件: ").append(chunk.getFilePath()).append("\n");
         sb.append("角色: ").append(chunk.getRole()).append("\n");
-        if (chunk.getMetadata().get("className") != null) {
-            sb.append("类名: ").append(chunk.getMetadata().get("className")).append("\n");
-        }
-        if (chunk.getMetadata().get("methodName") != null) {
-            sb.append("方法名: ").append(chunk.getMetadata().get("methodName")).append("\n");
+        if (chunk.getMetadata() != null) {
+            if (chunk.getMetadata().get("className") != null) {
+                sb.append("类名: ").append(chunk.getMetadata().get("className")).append("\n");
+            }
+            if (chunk.getMetadata().get("methodName") != null) {
+                sb.append("方法名: ").append(chunk.getMetadata().get("methodName")).append("\n");
+            }
         }
         if (chunk.getKeywords() != null && !chunk.getKeywords().isEmpty()) {
             sb.append("关键词: ").append(String.join(", ", chunk.getKeywords())).append("\n");

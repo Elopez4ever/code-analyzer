@@ -1,42 +1,34 @@
 -- db.sql
--- Code Analyzer 数据库初始化脚本
--- 使用前先创建数据库: CREATE DATABASE code_analyzer;
-
--- 安装向量插件
-
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- ============================================
 -- 项目表
 -- ============================================
 CREATE TABLE IF NOT EXISTS project (
-                                       project_id    TEXT PRIMARY KEY,
-                                       name          TEXT NOT NULL,
-                                       git_url       TEXT,
-                                       local_path    TEXT,
-                                       status        INT NOT NULL DEFAULT 0,
-                                       method        INT NOT NULL DEFAULT 0,
-                                       chunk_count   INT DEFAULT 0,
-                                       created_at    TIMESTAMP DEFAULT NOW(),
-                                       updated_at    TIMESTAMP DEFAULT NOW()
+                                       project_id  TEXT PRIMARY KEY,
+                                       name        TEXT NOT NULL,
+                                       git_url     TEXT,
+                                       local_path  TEXT,
+                                       status      INT NOT NULL DEFAULT 0,
+                                       method      INT NOT NULL DEFAULT 0,
+                                       chunk_count INT DEFAULT 0,
+                                       created_at  TIMESTAMP DEFAULT NOW(),
+                                       updated_at  TIMESTAMP DEFAULT NOW()
 );
 
--- 项目名全局唯一
-CREATE UNIQUE INDEX IF NOT EXISTS uk_project_name ON project (name) WHERE status != -2;
--- Git 仓库地址唯一
+CREATE UNIQUE INDEX IF NOT EXISTS uk_project_name    ON project (name)    WHERE status != -2;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_project_git_url ON project (git_url) WHERE status != -2;
 
 -- ============================================
 -- 代码块表
 -- ============================================
--- noinspection SqlNoDataSourceInspectionForFile
--- noinspection SqlResolve
 CREATE TABLE IF NOT EXISTS code_chunks (
                                            id          TEXT PRIMARY KEY,
                                            project_id  TEXT NOT NULL,
                                            file_path   TEXT NOT NULL,
                                            language    TEXT NOT NULL,
-                                           chunk_type  TEXT NOT NULL,
+                                           strategy    TEXT NOT NULL,
+                                           role        TEXT NOT NULL,
                                            start_line  INT NOT NULL DEFAULT 0,
                                            end_line    INT NOT NULL DEFAULT 0,
                                            content     TEXT NOT NULL,
@@ -48,17 +40,16 @@ CREATE TABLE IF NOT EXISTS code_chunks (
 );
 
 -- 向量索引 (HNSW)
--- noinspection SqlNoDataSourceInspectionForFile
--- noinspection SqlResolve
 CREATE INDEX IF NOT EXISTS idx_code_chunks_embedding
     ON code_chunks USING hnsw (embedding vector_cosine_ops)
     WITH (m = 16, ef_construction = 64);
 
 -- 过滤索引
-CREATE INDEX IF NOT EXISTS idx_code_chunks_project ON code_chunks (project_id);
-CREATE INDEX IF NOT EXISTS idx_code_chunks_project_file ON code_chunks (project_id, file_path);
-CREATE INDEX IF NOT EXISTS idx_code_chunks_project_type ON code_chunks (project_id, chunk_type);
-CREATE INDEX IF NOT EXISTS idx_code_chunks_project_lang ON code_chunks (project_id, language);
+CREATE INDEX IF NOT EXISTS idx_code_chunks_project          ON code_chunks (project_id);
+CREATE INDEX IF NOT EXISTS idx_code_chunks_project_file     ON code_chunks (project_id, file_path);
+CREATE INDEX IF NOT EXISTS idx_code_chunks_project_strategy ON code_chunks (project_id, strategy);
+CREATE INDEX IF NOT EXISTS idx_code_chunks_project_role     ON code_chunks (project_id, role);
+CREATE INDEX IF NOT EXISTS idx_code_chunks_project_lang     ON code_chunks (project_id, language);
 
 INSERT INTO "project" ("project_id", "name", "git_url", "local_path", "status", "method", "chunk_count", "created_at", "updated_at") VALUES ('proj-001', 'Spring Boot Demo', 'https://github.com/example/spring-boot-demo', '/data/repos/spring-boot-demo', 1, 0, 128, '2026-06-10 09:15:52.137034', '2026-06-10 09:15:52.137034');
 INSERT INTO "project" ("project_id", "name", "git_url", "local_path", "status", "method", "chunk_count", "created_at", "updated_at") VALUES ('proj-002', 'React Frontend', 'https://github.com/example/react-frontend', '/data/repos/react-frontend', 1, 1, 256, '2026-06-10 09:15:52.137034', '2026-06-10 09:15:52.137034');

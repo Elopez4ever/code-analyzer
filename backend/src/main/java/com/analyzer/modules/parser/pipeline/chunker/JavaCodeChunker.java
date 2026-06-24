@@ -32,9 +32,10 @@ public class JavaCodeChunker implements CodeChunker {
 
         CodeRole classRole = resolveClassRole(content);
         String stereotype = resolveStereotype(content);
-        Map<String, String> meta = stereotype != null
-                ? Map.of("stereotype", stereotype)
-                : Map.of();
+        Map<String, String> meta = new HashMap<>();
+        if (stereotype != null) {
+            meta.put("stereotype", stereotype);
+        }
 
         // 类级别 chunk
         chunks.add(CodeChunk.builder()

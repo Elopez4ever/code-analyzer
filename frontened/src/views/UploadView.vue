@@ -1,11 +1,109 @@
 ﻿<template>
   <div class="page upload-page">
-    <!-- Loading overlay -->
+    <!-- Upload result dialog -->
     <Transition name="fade">
-      <div v-if="submitting" class="loading-overlay">
-        <div class="loading-card">
-          <div class="spinner"></div>
-          <p class="loading-text">正在上传项目，请稍候…</p>
+      <div v-if="uploadResult" class="dialog-overlay" @click.self="dismissDialog">
+        <div class="dialog-card">
+          <!-- Loading / Progress state -->
+          <template v-if="uploadResult.status === 'loading'">
+            <!-- 钟表图标 -->
+            <div class="dialog-icon" :class="{ 'dialog-icon-error': uploadError, 'dialog-icon-done': uploadCompleted }">
+              <template v-if="uploadCompleted">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </template>
+              <template v-else-if="uploadError">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="15" y1="9" x2="9" y2="15"/>
+                  <line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+              </template>
+              <template v-else>
+                <svg class="clock-icon" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </template>
+            </div>
+
+            <!-- 标题 -->
+            <p class="dialog-title">
+              {{ uploadCompleted ? '处理完成' : uploadError ? '处理失败' : '正在处理' }}
+            </p>
+
+            <!-- 进度条 -->
+            <div class="progress-bar-wrap">
+              <div class="progress-bar">
+                <div
+                  class="progress-bar-fill"
+                  :class="{
+                    animated: !uploadError && !uploadCompleted,
+                    error: uploadError,
+                    done: uploadCompleted
+                  }"
+                  :style="{ width: progressBarWidth + '%' }"
+                ></div>
+              </div>
+              <span class="progress-percent">{{ progressBarWidth }}%</span>
+            </div>
+
+            <!-- 状态描述 -->
+            <p class="dialog-desc" :class="{ 'dialog-desc-error': uploadError }">
+              {{ uploadCompleted ? '项目已就绪，可前往项目列表查看' : uploadError ? uploadError : '请稍候…' }}
+            </p>
+
+            <!-- 操作按钮 -->
+            <div v-if="uploadError" class="dialog-actions">
+              <button class="btn btn-secondary" @click="dismissUploadDialog">关闭</button>
+              <button class="btn btn-primary" @click="handleZipUpload">重新上传</button>
+            </div>
+          </template>
+
+          <!-- Success state -->
+          <template v-else-if="uploadResult.status === 'success'">
+            <div class="result-icon result-icon-success">
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <p class="dialog-title">上传成功</p>
+            <!-- 完成进度条 -->
+            <div class="progress-bar-wrap">
+              <div class="progress-bar">
+                <div class="progress-bar-fill done" style="width: 100%"></div>
+              </div>
+              <span class="progress-percent">100%</span>
+            </div>
+            <p class="dialog-desc">{{ uploadResult.message || '项目已成功创建，正在解析代码结构' }}</p>
+            <div class="dialog-actions">
+              <button class="btn btn-primary" @click="goToProjects">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                查看项目列表
+              </button>
+              <button class="btn btn-secondary" @click="dismissDialog">返回</button>
+            </div>
+          </template>
+
+          <!-- Error state -->
+          <template v-else-if="uploadResult.status === 'error'">
+            <div class="result-icon result-icon-error">
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="15" y1="9" x2="9" y2="15"/>
+                <line x1="9" y1="9" x2="15" y2="15"/>
+              </svg>
+            </div>
+            <p class="dialog-title">上传失败</p>
+            <p class="dialog-desc dialog-desc-error">{{ uploadResult.message || '发生未知错误，请稍后重试' }}</p>
+            <div class="dialog-actions">
+              <button class="btn btn-secondary" @click="dismissDialog">返回</button>
+            </div>
+          </template>
         </div>
       </div>
     </Transition>
@@ -132,10 +230,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, onBeforeUnmount, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProjects } from '../store/projects'
-import { showSuccessToast } from '../utils/toast'
+import { useStompClient } from '../composables/useStompClient'
+import { projectsApi } from '../api/project'
 
 const projectName = ref('')
 const gitUrl = ref('')
@@ -143,25 +242,134 @@ const zipInput = ref(null)
 const zipFile = ref(null)
 const isDragging = ref(false)
 const submitting = ref(false)
+const uploadResult = ref(null) // null | { status, projectId?, message? }
 const router = useRouter()
-const { addProjectFromGit, addProjectFromZip } = useProjects()
+const { addProjectFromGit, addProjectFromZip, fetchProjects } = useProjects()
 
+// STOMP WebSocket
+const { subscribeProgress, initConnection } = useStompClient()
+
+// 进度相关
+const uploadProgress = reactive({ percent: 0, step: '', message: '' })
+const uploadError = ref('')
+const uploadCompleted = ref(false)
+const uploadType = ref('zip') // 'zip' | 'git'
+let unsubProgress = null
+
+const ZIP_STEPS = [
+  { key: 'EXTRACTING', label: '解压文件', range: [10, 60] },
+  { key: 'SAVING', label: '保存项目信息', range: [60, 100] },
+]
+
+const GIT_STEPS = [
+  { key: 'CLONING', label: '克隆仓库', range: [10, 60] },
+  { key: 'SAVING', label: '保存项目信息', range: [60, 100] },
+]
+
+const stepDefs = computed(() => uploadType.value === 'git' ? GIT_STEPS : ZIP_STEPS)
+
+const progressSteps = computed(() => {
+  const s = uploadProgress.step
+  const defs = stepDefs.value
+  const idx = defs.findIndex((x) => x.key === s)
+  return defs.map((x, i) => ({
+    ...x,
+    active: x.key === s,
+    done: i < idx || (i === idx && uploadProgress.percent >= x.range[1]),
+  }))
+})
+
+const progressBarWidth = computed(() => {
+  if (uploadError.value || uploadCompleted.value) return 100
+  return Math.max(uploadProgress.percent, 2)
+})
 
 const goToProjects = () => {
-  showSuccessToast('添加成功')
+  dismissUploadDialog()
   router.push({ path: '/projects' })
+}
+
+const dismissDialog = () => {
+  if (uploadResult.value?.status === 'loading' && !uploadError.value && !uploadCompleted.value) return
+  dismissUploadDialog()
+}
+
+const dismissUploadDialog = () => {
+  if (unsubProgress) { unsubProgress(); unsubProgress = null }
+  uploadResult.value = null
+  uploadError.value = ''
+  uploadCompleted.value = false
+  uploadProgress.percent = 0
+  uploadProgress.step = ''
+  uploadProgress.message = ''
+}
+
+const resetProgress = () => {
+  uploadError.value = ''
+  uploadCompleted.value = false
+  uploadProgress.percent = 0
+  uploadProgress.step = ''
+  uploadProgress.message = ''
 }
 
 const handleGitSubmit = async () => {
   const trimmed = gitUrl.value.trim()
   if (!trimmed || submitting.value) return
   submitting.value = true
-  const result = await addProjectFromGit(trimmed, projectName.value)
-  submitting.value = false
-  if (result.success) {
-    gitUrl.value = ''
-    projectName.value = ''
-    goToProjects()
+  uploadType.value = 'git'
+  resetProgress()
+  uploadResult.value = { status: 'loading' }
+
+  try {
+    await initConnection()
+
+    unsubProgress = await subscribeProgress('/topic/progress', (msg) => {
+      const tracked = uploadResult.value?.projectId
+      if (tracked && msg.taskId && msg.taskId !== tracked && msg.taskId !== String(tracked)) return
+      if (msg.taskId && !uploadResult.value?.projectId) {
+        uploadResult.value = { ...uploadResult.value, projectId: msg.taskId }
+      }
+      uploadProgress.percent = msg.percent ?? uploadProgress.percent
+      uploadProgress.step = msg.step ?? uploadProgress.step
+      uploadProgress.message = msg.message ?? ''
+      if (msg.step === 'ERROR') uploadError.value = msg.message || '上传处理失败'
+      if (msg.step === 'COMPLETED') {
+        uploadProgress.step = 'SAVING'
+        uploadProgress.percent = 100
+        uploadCompleted.value = true
+      }
+    }, { brokerURL: '/ws' })
+
+    const raw = await projectsApi.createFromGit(trimmed, projectName.value || null)
+    if (raw.projectId || raw.id) {
+      uploadResult.value = { ...uploadResult.value, projectId: raw.projectId || raw.id }
+      fetchProjects(1)
+    }
+
+    if (!uploadCompleted.value && !uploadError.value) {
+      await new Promise((resolve) => {
+        const t = setInterval(() => {
+          if (uploadCompleted.value || uploadError.value) { clearInterval(t); resolve() }
+        }, 200)
+        setTimeout(() => { clearInterval(t); resolve() }, 300000)
+      })
+    }
+
+    submitting.value = false
+
+    if (uploadError.value) {
+    } else {
+      gitUrl.value = ''
+      projectName.value = ''
+      if (unsubProgress) { unsubProgress(); unsubProgress = null }
+      uploadResult.value = { status: 'success', message: '项目已创建成功，正在后台解析代码结构' }
+    }
+  } catch (err) {
+    submitting.value = false
+    uploadError.value = err.message || '上传失败，请重试'
+    if (!uploadResult.value?.projectId) {
+      uploadResult.value = { status: 'loading' }
+    }
   }
 }
 
@@ -177,15 +385,69 @@ const handleZipSelect = (event) => {
 const handleZipUpload = async () => {
   if (!zipFile.value || submitting.value) return
   submitting.value = true
-  const result = await addProjectFromZip(zipFile.value, projectName.value)
-  submitting.value = false
-  if (result.success) {
-    zipFile.value = null
-    projectName.value = ''
-    if (zipInput.value) {
-      zipInput.value.value = ''
+  uploadType.value = 'zip'
+  resetProgress()
+  uploadResult.value = { status: 'loading' }
+
+  try {
+    await initConnection()
+
+    // 先订阅 WebSocket 进度
+    unsubProgress = await subscribeProgress('/topic/progress', (msg) => {
+      const tracked = uploadResult.value?.projectId
+      if (tracked && msg.taskId && msg.taskId !== tracked && msg.taskId !== String(tracked)) return
+      if (msg.taskId && !uploadResult.value?.projectId) {
+        uploadResult.value = { ...uploadResult.value, projectId: msg.taskId }
+      }
+      uploadProgress.percent = msg.percent ?? uploadProgress.percent
+      uploadProgress.step = msg.step ?? uploadProgress.step
+      uploadProgress.message = msg.message ?? ''
+      if (msg.step === 'ERROR') uploadError.value = msg.message || '上传处理失败'
+      if (msg.step === 'COMPLETED') {
+        uploadProgress.step = 'SAVING'
+        uploadProgress.percent = 100
+        uploadCompleted.value = true
+      }
+    }, { brokerURL: '/ws' })
+
+    // 发起上传
+    const formData = new FormData()
+    formData.append('file', zipFile.value)
+    if (projectName.value) formData.append('projectName', projectName.value)
+
+    const raw = await projectsApi.createFromZip(formData)
+    if (raw.projectId || raw.id) {
+      uploadResult.value = { ...uploadResult.value, projectId: raw.projectId || raw.id }
+      fetchProjects(1)
     }
-    goToProjects()
+
+    // 等待 WebSocket 完成或出错，最多 120s
+    if (!uploadCompleted.value && !uploadError.value) {
+      await new Promise((resolve) => {
+        const t = setInterval(() => {
+          if (uploadCompleted.value || uploadError.value) { clearInterval(t); resolve() }
+        }, 200)
+        setTimeout(() => { clearInterval(t); resolve() }, 120000)
+      })
+    }
+
+    submitting.value = false
+
+    if (uploadError.value) {
+      // 保持弹框显示错误
+    } else {
+      zipFile.value = null
+      projectName.value = ''
+      if (zipInput.value) zipInput.value.value = ''
+      if (unsubProgress) { unsubProgress(); unsubProgress = null }
+      uploadResult.value = { status: 'success', message: '项目已创建成功，正在后台解析代码结构' }
+    }
+  } catch (err) {
+    submitting.value = false
+    uploadError.value = err.message || '上传失败，请重试'
+    if (!uploadResult.value?.projectId) {
+      uploadResult.value = { status: 'loading' }
+    }
   }
 }
 
@@ -199,6 +461,10 @@ const handleDrop = (event) => {
     projectName.value = file.name.replace(/\.zip$/i, '')
   }
 }
+
+onBeforeUnmount(() => {
+  if (unsubProgress) { unsubProgress(); unsubProgress = null }
+})
 </script>
 
 <style scoped>
@@ -212,8 +478,8 @@ const handleDrop = (event) => {
   position: relative;
 }
 
-/* Loading overlay */
-.loading-overlay {
+/* ── Dialog overlay ── */
+.dialog-overlay {
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -224,39 +490,152 @@ const handleDrop = (event) => {
   backdrop-filter: blur(4px);
 }
 
-.loading-card {
+.dialog-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 40px 48px;
+  border-radius: 20px;
+  padding: 48px 56px;
+  max-width: 440px;
+  width: 90vw;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.12);
 }
 
-.spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid var(--border);
-  border-top-color: var(--primary);
+.dialog-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 18px;
+}
+
+.dialog-desc {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 20px;
+  line-height: 1.6;
+}
+
+.dialog-desc-error {
+  color: var(--danger, #dc2626);
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Result icons */
+.result-icon {
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.result-icon-success {
+  background: var(--success-muted, rgba(22, 163, 74, 0.12));
+  color: var(--success, #16a34a);
+}
+
+.result-icon-error {
+  background: var(--danger-muted, rgba(220, 38, 38, 0.1));
+  color: var(--danger, #dc2626);
+}
+
+/* Progress bar in dialog */
+.progress-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 10px;
+  background: var(--surface-muted, #f3f4f6);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 5px;
+  transition: width 0.4s ease;
+}
+
+.progress-bar-fill.animated {
+  background: linear-gradient(90deg, var(--primary), var(--primary-hover, #6366f1), var(--primary));
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease infinite;
+}
+
+.progress-bar-fill.error { background: var(--danger, #dc2626); animation: none; }
+.progress-bar-fill.done { background: var(--success, #16a34a); animation: none; }
+
+.progress-percent {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 36px;
+  text-align: right;
+}
+
+/* 加载态钟表图标 */
+.dialog-icon {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  background: var(--primary-muted, rgba(99, 102, 241, 0.1));
+  color: var(--primary);
+  transition: background 0.3s, color 0.3s;
+}
+
+.dialog-icon-done {
+  background: var(--success-muted, rgba(22, 163, 74, 0.12));
+  color: var(--success, #16a34a);
+}
+
+.dialog-icon-error {
+  background: var(--danger-muted, rgba(220, 38, 38, 0.1));
+  color: var(--danger, #dc2626);
+}
+
+.clock-icon {
+  animation: clock-tick 2s ease-in-out infinite;
+}
+
+@keyframes clock-tick {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(3deg); }
+  75% { transform: rotate(-3deg); }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
-.loading-text {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-/* Fade transition for loading overlay */
+/* Fade transition for dialog overlay */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.25s ease;
@@ -266,6 +645,7 @@ const handleDrop = (event) => {
   opacity: 0;
 }
 
+/* ── Existing upload layout ── */
 .upload-container {
   width: 100%;
   max-width: 960px;
@@ -474,6 +854,17 @@ const handleDrop = (event) => {
   cursor: not-allowed;
   box-shadow: none;
   transform: none;
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1.5px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--surface-muted, #f9fafb);
+  border-color: var(--primary-light, #a5b4fc);
 }
 
 .btn-full {

@@ -28,6 +28,7 @@ const state = reactive({
 })
 
 function normalizeProject(raw) {
+  if (!raw) return null
   return {
     id: raw.projectId,
     name: raw.name,
@@ -74,8 +75,11 @@ function setProjectName(name, immediate = false) {
 async function addProjectFromGit(gitUrl, name) {
   try {
     const raw = await projectsApi.createFromGit(gitUrl, name)
-    state.items.unshift(normalizeProject(raw))
-    state.total += 1
+    const project = normalizeProject(raw)
+    if (project) {
+      state.items.unshift(project)
+      state.total += 1
+    }
     return { success: true }
   } catch (err) {
     state.error = err.message
@@ -86,11 +90,14 @@ async function addProjectFromGit(gitUrl, name) {
 async function addProjectFromZip(file, name) {
   const formData = new FormData()
   formData.append('file', file)
-  if (name) formData.append('name', name)
+  if (name) formData.append('projectName', name)
   try {
     const raw = await projectsApi.createFromZip(formData)
-    state.items.unshift(normalizeProject(raw))
-    state.total += 1
+    const project = normalizeProject(raw)
+    if (project) {
+      state.items.unshift(project)
+      state.total += 1
+    }
     return { success: true }
   } catch (err) {
     state.error = err.message

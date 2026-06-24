@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 为 CodeChunk 填充结构化元数据：包名、类名、方法签名、修饰符、所属模块路径等
@@ -42,30 +43,29 @@ public class MetadataEnricher implements ChunkEnricher {
         // 第二层：谓词规则补充分类标签（templateEngine, configFormat, framework 等）
         List<ExtractionRule> metadataRules = ruleRegistry.getMetadataRules(chunk.getRole());
         if (!metadataRules.isEmpty()) {
-            if (chunk.getMetadata() == null) {
-                chunk.setMetadata(new HashMap<>());
-            }
+            Map<String, String> meta = new HashMap<>(chunk.getMetadata() != null ? chunk.getMetadata() : Map.of());
             for (ExtractionRule rule : metadataRules) {
                 if (rule.matches(chunk)) {
-                    applyMetadataRule(chunk, rule.output());
+                    applyMetadataRule(meta, rule.output());
                 }
             }
+            chunk.setMetadata(meta);
         }
 
         return chunk;
     }
 
     /**
-     * 将规则输出 {@code key:value} 写入 chunk.metadata。
+     * 将规则输出 {@code key:value} 写入 metadata。
      * 若输出不含冒号则跳过；使用 {@code putIfAbsent} 避免覆盖 extractor 提取的精确值。
      */
-    private void applyMetadataRule(CodeChunk chunk, String output) {
+    private void applyMetadataRule(Map<String, String> meta, String output) {
         int colonIdx = output.indexOf(':');
         if (colonIdx <= 0) {
             return;
         }
         String key = output.substring(0, colonIdx);
         String value = output.substring(colonIdx + 1);
-        chunk.getMetadata().putIfAbsent(key, value);
+        meta.putIfAbsent(key, value);
     }
 }
