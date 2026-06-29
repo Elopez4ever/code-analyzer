@@ -1,11 +1,11 @@
-package com.analyzer.modules.parser.pipeline.enricher;
+package com.analyzer.modules.knowledgebase.enricher;
 
-import com.analyzer.modules.parser.pipeline.ChunkEnricher;
+import com.analyzer.modules.knowledgebase.ChunkEnricher;
+import com.analyzer.modules.knowledgebase.enricher.extractor.StructureExtractor;
+import com.analyzer.modules.knowledgebase.enricher.rule.ExtractionRule;
+import com.analyzer.modules.knowledgebase.enricher.rule.RuleRegistry;
 import com.analyzer.modules.parser.pipeline.domain.CodeChunk;
 import com.analyzer.modules.parser.pipeline.domain.EnricherPriority;
-import com.analyzer.modules.parser.pipeline.enricher.extractor.StructureExtractor;
-import com.analyzer.modules.parser.pipeline.enricher.rule.ExtractionRule;
-import com.analyzer.modules.parser.pipeline.enricher.rule.RuleRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

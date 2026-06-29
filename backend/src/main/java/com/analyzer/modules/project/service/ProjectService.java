@@ -9,7 +9,7 @@ import com.analyzer.infrastructure.persistence.service.ProjectPersistenceService
 import com.analyzer.infrastructure.persistence.po.ProjectPO;
 import com.analyzer.infrastructure.persistence.po.enums.ProjectStatus;
 import com.analyzer.infrastructure.file.FileValidationService;
-import com.analyzer.modules.parser.service.ProjectParsingService;
+import com.analyzer.modules.task.service.TaskService;
 import com.analyzer.modules.project.model.ProjectCreateDTO;
 import com.analyzer.modules.project.model.ProjectDetailDTO;
 import com.analyzer.modules.project.model.ProjectPageDTO;
@@ -40,7 +40,7 @@ public class ProjectService {
     private final AppConfigProperties appConfig;
     private final FileValidationService fileValidationService;
     private final ProjectPersistenceService projectPersistenceService;
-    private final ProjectParsingService parsingService;
+    private final TaskService taskService;
     private final GitService gitService;
     private final ZipService zipService;
     private final ProgressTrackerFactory progressTrackerFactory;
@@ -73,7 +73,7 @@ public class ProjectService {
             );
 
             tracker.complete("项目已就绪，正在后台解析代码结构");
-            parsingService.parseAsync(projectId, localPath);
+            taskService.submit(projectId, localPath);
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
@@ -112,7 +112,7 @@ public class ProjectService {
             );
 
             tracker.complete("项目已就绪，正在后台解析代码结构");
-            parsingService.parseAsync(projectId, localDir.getAbsolutePath());
+            taskService.submit(projectId, localDir.getAbsolutePath());
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {

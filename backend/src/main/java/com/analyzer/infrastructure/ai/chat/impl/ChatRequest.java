@@ -1,4 +1,4 @@
-package com.analyzer.infrastructure.ai.chat.domain;
+package com.analyzer.infrastructure.ai.chat.impl;
 
 import lombok.Builder;
 import lombok.Data;

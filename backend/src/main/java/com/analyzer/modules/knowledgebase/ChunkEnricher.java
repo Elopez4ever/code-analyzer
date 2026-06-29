@@ -1,5 +1,6 @@
-package com.analyzer.modules.parser.pipeline;
+package com.analyzer.modules.knowledgebase;
 
+import com.analyzer.modules.knowledgebase.enricher.rule.ExtractionRule;
 import com.analyzer.modules.parser.pipeline.domain.CodeChunk;
 import com.analyzer.modules.parser.pipeline.domain.FileLanguage;
 

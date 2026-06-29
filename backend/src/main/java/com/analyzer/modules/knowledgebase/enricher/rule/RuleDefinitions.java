@@ -1,10 +1,10 @@
-package com.analyzer.modules.parser.pipeline.enricher.rule;
+package com.analyzer.modules.knowledgebase.enricher.rule;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import java.util.List;
 import com.analyzer.modules.parser.pipeline.domain.CodeRole;
-import static com.analyzer.modules.parser.pipeline.enricher.rule.ExtractionRule.*;
+import static com.analyzer.modules.knowledgebase.enricher.rule.ExtractionRule.*;
 
 /**
  * 规则配置

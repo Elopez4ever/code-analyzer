@@ -1,4 +1,4 @@
-package com.analyzer.modules.parser.pipeline.enricher.rule;
+package com.analyzer.modules.knowledgebase.enricher.rule;
 
 import java.util.ArrayList;
 import java.util.EnumMap;

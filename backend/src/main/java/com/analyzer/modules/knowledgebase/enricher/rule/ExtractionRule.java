@@ -1,4 +1,4 @@
-package com.analyzer.modules.parser.pipeline.enricher.rule;
+package com.analyzer.modules.knowledgebase.enricher.rule;
 
 import com.analyzer.modules.parser.pipeline.domain.CodeChunk;
 

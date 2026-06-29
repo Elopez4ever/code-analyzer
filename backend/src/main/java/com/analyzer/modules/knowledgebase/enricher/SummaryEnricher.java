@@ -1,7 +1,7 @@
-package com.analyzer.modules.parser.pipeline.enricher;
+package com.analyzer.modules.knowledgebase.enricher;
 
 import com.analyzer.infrastructure.ai.chat.ChatService;
-import com.analyzer.modules.parser.pipeline.ChunkEnricher;
+import com.analyzer.modules.knowledgebase.ChunkEnricher;
 import com.analyzer.modules.parser.pipeline.domain.CodeChunk;
 import com.analyzer.modules.parser.pipeline.domain.EnricherPriority;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  * 使用 LLM 生成自然语言摘要
  */
 @Slf4j
-//@Component
+@Component
 @RequiredArgsConstructor
 public class SummaryEnricher implements ChunkEnricher {
 
@@ -27,25 +27,22 @@ public class SummaryEnricher implements ChunkEnricher {
         return EnricherPriority.SUMMARY.getOrder();
     }
 
-    // TODO: 参数化调用模型
     @Override
     public CodeChunk enrich(CodeChunk chunk) {
         try {
-            String summary = chatService.chat(MODEL_KEY, SYSTEM_PROMPT, buildUserPrompt(chunk));
+            String summary = chatService.prompt()
+                    .model(MODEL_KEY)
+                    .system(SYSTEM_PROMPT)
+                    .call(buildUserPrompt(chunk));
+
             return chunk.toBuilder().summary(summary).build();
         } catch (Exception e) {
             log.warn("chunk 总结失败: [{}]", chunk.getId(), e);
-            return chunk;  // 失败不阻断 pipeline
+            return chunk;
         }
     }
 
-    /**
-     * 构建 Prompt  优化: 带上已有的 metadata 和 keywords，让 AI 有更多上下文
-     * @param chunk chunk
-     * @return prompt
-     */
     private String buildUserPrompt(CodeChunk chunk) {
-        // 带上已有的 metadata 和 keywords，让 AI 有更多上下文
         StringBuilder sb = new StringBuilder();
         sb.append("文件: ").append(chunk.getFilePath()).append("\n");
         sb.append("角色: ").append(chunk.getRole()).append("\n");

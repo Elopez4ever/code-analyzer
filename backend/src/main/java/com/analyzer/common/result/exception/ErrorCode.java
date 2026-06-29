@@ -28,6 +28,13 @@ public enum ErrorCode {
     // ========== Parser Module 错误 ==========
     PARSER_NOT_FOUND(413, "未找到符合项目的Parser"),
     PARSE_FAILED(414, "解析出错"),
+
+
+    // ========== Chat Module 错误 =========
+    MODEL_NOT_AVAILABLE(415, "模型不可用"),
+    EMBED_FAILED(416, "Embedding 批量调用失败"),
+    CHAT_FAILED(417, "Chat调用失败"),
+    STREAM_FAILED(418, "Stream 初始化失败"),
     ;
 
     private final Integer code;

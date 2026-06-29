@@ -1,2 +1,5 @@
-package com.analyzer.infrastructure.ai.chat;public class ChatService {
+package com.analyzer.infrastructure.ai.chat;
+
+public interface ChatService {
+    ChatSpec prompt();
 }
